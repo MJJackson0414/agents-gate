@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /d/workspace/AiTestDataFinding/csd-svc-ai-texttosql-agent log --oneline -10)",
+      "Bash(find /d/workspace/AiTestDataFinding -type f -name \"*.sh\" -exec head -5 {} ;)",
+      "Bash(git add CLAUDE.md .gitignore)",
+      "Bash(git add CLAUDE.md)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
