@@ -203,7 +203,18 @@ DRAFT → PENDING_AI_REVIEW → PENDING_HUMAN_REVIEW → PUBLISHED
                                                   → REJECTED
 ```
 
-### 4. 版本管理
+### 4. CLI 相容性規則
+
+- 若 Skill/Agent 的 `mcp_spec` 有值（需要 MCP Server），自動標記為**不支援 Gemini CLI**
+- 平台在 Skill 詳細頁顯示各 CLI 的相容狀態標籤
+- 下載時只提供使用者所選 CLI 的適配套件
+
+```
+mcp_spec 有值 → Gemini CLI: ❌ 不支援
+mcp_spec 為空 → 全 CLI 相容 ✅
+```
+
+### 5. 版本管理
 
 - 遵循 SemVer（x.y.z）
 - 每次更新需填寫 changelog
