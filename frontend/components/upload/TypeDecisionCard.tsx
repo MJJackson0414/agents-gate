@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Wrench, Bot, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
+import Link from 'next/link';
+import { Wrench, Bot, ChevronDown, ChevronUp, Lightbulb, ArrowLeft } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useUpload, SkillType } from '@/lib/upload-context';
 
@@ -70,7 +71,16 @@ export default function TypeDecisionCard() {
 
   return (
     <div className="max-w-3xl mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold text-center mb-2 text-gray-900">
+      <div className="mb-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-blue-500 transition-colors"
+        >
+          <ArrowLeft size={14} />
+          回到首頁
+        </Link>
+      </div>
+      <h1 className="text-3xl font-bold text-center mb-2 text-blue-400">
         上傳至 AgentsGate
       </h1>
       <p className="text-center text-gray-500 mb-10">
