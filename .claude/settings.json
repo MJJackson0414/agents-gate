@@ -6,6 +6,10 @@
       "Bash(powershell -NoProfile -Command \"$b=[IO.File]::ReadAllBytes\\(''d:\\\\workspace\\\\AgentsGate\\\\backend\\\\mvnw.cmd''\\); $b[0].ToString\\(''X2''\\)+'' ''+$b[1].ToString\\(''X2''\\)+'' ''+$b[2].ToString\\(''X2''\\)\")",
       "Bash(powershell -NoProfile -Command \"& { $bytes = [IO.File]::ReadAllBytes\\(''d:\\\\workspace\\\\AgentsGate\\\\backend\\\\mvnw.cmd''\\); Write-Output \\($bytes[0].ToString\\(''X2''\\) + '' '' + $bytes[1].ToString\\(''X2''\\) + '' '' + $bytes[2].ToString\\(''X2''\\)\\) }\")",
       "Bash(powershell -NoProfile:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\jacks\\.claude\\projects\\d--workspace-AgentsGate",
+      "C:\\Users\\jacks\\.claude\\projects\\d--workspace-AgentsGate\\memory"
     ]
   }
 }
