@@ -1,9 +1,11 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/agentsgate}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/agentsgate?characterEncoding=UTF-8&useUnicode=true}
     username: ${DB_USER:agentsgate}
     password: ${DB_PASSWORD:agentsgate}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-init-sql: "SET client_encoding TO 'UTF8'"
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -15,6 +17,11 @@ spring:
 
 server:
   port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 app:
   cors:

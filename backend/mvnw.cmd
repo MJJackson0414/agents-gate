@@ -1,6 +1,4 @@
-@REM ----------------------------------------------------------------------------
 @REM Maven Wrapper - PowerShell-based, downloads Maven binary if needed
-@REM ----------------------------------------------------------------------------
 @echo off
 setlocal EnableDelayedExpansion
 
@@ -35,4 +33,8 @@ FOR /F "delims=" %%M IN ('powershell -NoProfile -Command "Get-ChildItem '!DIST_D
 IF "%MVN_CMD%"=="" ( echo ERROR: mvn.cmd not found after extraction & exit /B 1 )
 
 :run
+@REM Set terminal to UTF-8 and JVM encoding flags
+chcp 65001 > nul
+SET "MAVEN_OPTS=-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8"
+
 "%MVN_CMD%" -f "%MAVEN_PROJECTBASEDIR%pom.xml" %*
