@@ -5,7 +5,10 @@
       "Bash(powershell -NoProfile -Command \"$bytes = [IO.File]::ReadAllBytes\\(''d:\\\\workspace\\\\AgentsGate\\\\backend\\\\mvnw.cmd''\\); Write-Host \\(''First 3 bytes: '' + \\($bytes[0..2] | ForEach-Object { ''{0:X2}'' -f $_} | Join-String -Separator '' ''\\)\\); Write-Host \\(''Has UTF-8 BOM: '' + \\($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF\\)\\)\")",
       "Bash(powershell -NoProfile -Command \"$b=[IO.File]::ReadAllBytes\\(''d:\\\\workspace\\\\AgentsGate\\\\backend\\\\mvnw.cmd''\\); $b[0].ToString\\(''X2''\\)+'' ''+$b[1].ToString\\(''X2''\\)+'' ''+$b[2].ToString\\(''X2''\\)\")",
       "Bash(powershell -NoProfile -Command \"& { $bytes = [IO.File]::ReadAllBytes\\(''d:\\\\workspace\\\\AgentsGate\\\\backend\\\\mvnw.cmd''\\); Write-Output \\($bytes[0].ToString\\(''X2''\\) + '' '' + $bytes[1].ToString\\(''X2''\\) + '' '' + $bytes[2].ToString\\(''X2''\\)\\) }\")",
-      "Bash(powershell -NoProfile:*)"
+      "Bash(powershell -NoProfile:*)",
+      "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd dependency:resolve -q 2>&1 | Select-Object -Last 10 }\")",
+      "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd dependency:resolve 2>&1 | Select-Object -Last 15 }\")",
+      "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd compile 2>&1 | Select-Object -Last 15 }\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\jacks\\.claude\\projects\\d--workspace-AgentsGate",

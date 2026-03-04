@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -28,6 +29,14 @@ public class SkillController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<SkillResponse>>> listSkills() {
         return ResponseEntity.ok(ApiResponse.ok(skillService.listAll()));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<SkillResponse>> getSkill(@PathVariable UUID id) {
+        return skillService.findById(id)
+                .map(skill -> ResponseEntity.ok(ApiResponse.ok(skill)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("找不到該 Skill")));
     }
 
     @PostMapping

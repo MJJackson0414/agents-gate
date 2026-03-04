@@ -26,3 +26,6 @@ server:
 app:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+anthropic:
+  api-key: ${ANTHROPIC_API_KEY:}

@@ -1,5 +1,6 @@
 package com.agentsgate.service;
 
+import com.agentsgate.ai.AiReviewService;
 import com.agentsgate.domain.Skill;
 import com.agentsgate.domain.SkillStatus;
 import com.agentsgate.dto.SkillResponse;
@@ -7,22 +8,36 @@ import com.agentsgate.dto.SkillUploadRequest;
 import com.agentsgate.repository.SkillRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class SkillService {
 
     private final SkillRepository skillRepository;
+    private final AiReviewService aiReviewService;
 
-    public SkillService(SkillRepository skillRepository) {
+    public SkillService(SkillRepository skillRepository, AiReviewService aiReviewService) {
         this.skillRepository = skillRepository;
+        this.aiReviewService = aiReviewService;
     }
 
     @Transactional
     public SkillResponse uploadSkill(SkillUploadRequest request) {
         Skill skill = mapRequestToEntity(request);
         Skill saved = skillRepository.save(skill);
+        UUID savedId = saved.getId();
+        // Trigger async AI review only after the transaction commits
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                aiReviewService.reviewAsync(savedId);
+            }
+        });
         return SkillResponse.from(saved);
     }
 
@@ -31,6 +46,11 @@ public class SkillService {
         return skillRepository.findAll().stream()
                 .map(SkillResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SkillResponse> findById(UUID id) {
+        return skillRepository.findById(id).map(SkillResponse::from);
     }
 
     private Skill mapRequestToEntity(SkillUploadRequest request) {

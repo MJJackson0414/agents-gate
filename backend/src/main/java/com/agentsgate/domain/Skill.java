@@ -84,6 +84,10 @@ public class Skill {
     @Column(columnDefinition = "jsonb")
     private Map<String, String> cliOverrides;
 
+    // AI review feedback stored as JSON (SkillReviewResult)
+    @Column(columnDefinition = "TEXT")
+    private String reviewFeedback;
+
     // Derived flag: true when mcpSpec is present → Gemini CLI not supported
     @Column(nullable = false)
     private boolean hasMcpSpec = false;
@@ -171,6 +175,9 @@ public class Skill {
     public void setCliOverrides(Map<String, String> cliOverrides) { this.cliOverrides = cliOverrides; }
 
     public boolean isHasMcpSpec() { return hasMcpSpec; }
+
+    public String getReviewFeedback() { return reviewFeedback; }
+    public void setReviewFeedback(String reviewFeedback) { this.reviewFeedback = reviewFeedback; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

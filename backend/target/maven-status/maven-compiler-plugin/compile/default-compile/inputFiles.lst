@@ -1,5 +1,10 @@
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\AgentsGateApplication.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\ai\AiReviewService.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\ai\SkillReviewAiService.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\ai\SkillReviewResult.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\api\SkillController.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\AiConfig.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\AsyncConfig.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\DataSeeder.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\SecurityConfig.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\OsType.java
