@@ -9,6 +9,7 @@ import java.util.List;
 public record SkillReviewResult(
         boolean approved,
         String summary,
+        String userExplanation,
         List<String> issues,
         List<String> suggestions
 ) {}

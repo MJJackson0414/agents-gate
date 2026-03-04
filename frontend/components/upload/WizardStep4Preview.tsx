@@ -1,12 +1,104 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUpload } from '@/lib/upload-context';
 import { generateAdapters, CliTarget, getCliLabel } from '@/lib/cli-adapter';
-import { uploadSkill } from '@/lib/api';
+import { uploadSkill, fetchSkillById, SkillDetailResponse, SkillReviewResult } from '@/lib/api';
 import { clsx } from 'clsx';
 import { Copy, Check } from 'lucide-react';
+
+const TERMINAL_STATUSES = ['PENDING_HUMAN_REVIEW', 'PUBLISHED', 'REJECTED'];
+const STATUS_LABEL: Record<string, { label: string; color: string; icon: string }> = {
+  DRAFT:                { label: '草稿',       color: 'text-gray-500',  icon: '⏳' },
+  PENDING_AI_REVIEW:    { label: 'AI 審核中',  color: 'text-blue-600',  icon: '🤖' },
+  PENDING_HUMAN_REVIEW: { label: '等待人工審核', color: 'text-yellow-600', icon: '👀' },
+  PUBLISHED:            { label: '已發布',     color: 'text-green-600', icon: '✅' },
+  REJECTED:             { label: '已退回',     color: 'text-red-600',   icon: '❌' },
+};
+
+function parseFeedback(raw: string | null): SkillReviewResult | null {
+  if (!raw) return null;
+  try { return JSON.parse(raw) as SkillReviewResult; } catch { return null; }
+}
+
+function ReviewStatusCard({ skillId }: { skillId: string }) {
+  const [skill, setSkill] = useState<SkillDetailResponse | null>(null);
+  const [pollError, setPollError] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await fetchSkillById(skillId);
+        if (res.success && res.data) {
+          setSkill(res.data);
+          if (TERMINAL_STATUSES.includes(res.data.status)) {
+            if (pollRef.current) clearInterval(pollRef.current);
+          }
+        }
+      } catch {
+        setPollError(true);
+        if (pollRef.current) clearInterval(pollRef.current);
+      }
+    };
+    poll();
+    pollRef.current = setInterval(poll, 3000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [skillId]);
+
+  const statusInfo = skill ? (STATUS_LABEL[skill.status] ?? STATUS_LABEL['DRAFT']) : STATUS_LABEL['DRAFT'];
+  const isPolling = !skill || !TERMINAL_STATUSES.includes(skill.status);
+  const feedback = skill ? parseFeedback(skill.reviewFeedback) : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl">{statusInfo.icon}</span>
+        <div>
+          <p className={clsx('font-semibold', statusInfo.color)}>{statusInfo.label}</p>
+          {isPolling && !pollError && (
+            <p className="text-xs text-gray-400 mt-0.5 animate-pulse">正在等待審核結果...</p>
+          )}
+          {pollError && <p className="text-xs text-red-400 mt-0.5">無法取得狀態，請稍後至首頁查看</p>}
+        </div>
+        {isPolling && !pollError && (
+          <div className="ml-auto w-4 h-4 rounded-full border-2 border-blue-400 border-t-transparent animate-spin" />
+        )}
+      </div>
+
+      {feedback && (
+        <div className="space-y-3 pt-2 border-t border-gray-100">
+          {feedback.userExplanation && (
+            <p className="text-sm text-gray-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
+              <span className="font-semibold text-amber-800">📋 審核說明：</span>{feedback.userExplanation}
+            </p>
+          )}
+          {feedback.issues.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p className="text-xs font-semibold text-red-700 mb-1">⚠ 需要修正的問題：</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {feedback.issues.map((issue, i) => (
+                  <li key={i} className="text-xs text-red-600">{issue}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {feedback.suggestions.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <p className="text-xs font-semibold text-blue-700 mb-1">💡 建議改善：</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {feedback.suggestions.map((s, i) => (
+                  <li key={i} className="text-xs text-blue-600">{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const CLI_TABS: CliTarget[] = ['claude', 'copilot', 'gemini', 'kiro'];
 
@@ -96,21 +188,29 @@ export default function WizardStep4Preview() {
     }
   }
 
-  if (submitResult?.success) {
+  if (submitResult?.success && submitResult.id) {
     return (
-      <div className="text-center py-16 space-y-4">
-        <div className="text-5xl">🎉</div>
-        <h2 className="text-2xl font-semibold text-gray-900">已提交審核！</h2>
-        <p className="text-gray-500">
-          您的 {type === 'skill' ? 'Skill（技能）' : 'Agent（代理人）'} 已提交。AI 審核完成後將通知您。
-        </p>
-        <p className="text-xs text-gray-400">ID：{submitResult.id}</p>
-        <button
-          onClick={() => router.push('/upload')}
-          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-        >
-          再次上傳
-        </button>
+      <div className="space-y-6 py-8">
+        <div className="text-center space-y-2">
+          <div className="text-5xl">🎉</div>
+          <h2 className="text-2xl font-semibold text-gray-900">已提交審核！</h2>
+          <p className="text-gray-500 text-sm">
+            您的 {type === 'skill' ? 'Skill（技能）' : 'Agent（代理人）'} 正在進行 AI 初審。
+          </p>
+          <p className="text-xs text-gray-400 font-mono">ID：{submitResult.id}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">審核進度</h3>
+          <ReviewStatusCard skillId={submitResult.id} />
+        </div>
+        <div className="text-center">
+          <button
+            onClick={() => router.push('/upload')}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+          >
+            再次上傳
+          </button>
+        </div>
       </div>
     );
   }

@@ -1,6 +1,7 @@
 package com.agentsgate.api;
 
 import com.agentsgate.dto.ApiResponse;
+import com.agentsgate.dto.SkillDetailResponse;
 import com.agentsgate.dto.SkillResponse;
 import com.agentsgate.dto.SkillUploadRequest;
 import com.agentsgate.service.SkillService;
@@ -32,7 +33,7 @@ public class SkillController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<SkillResponse>> getSkill(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<SkillDetailResponse>> getSkill(@PathVariable UUID id) {
         return skillService.findById(id)
                 .map(skill -> ResponseEntity.ok(ApiResponse.ok(skill)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)

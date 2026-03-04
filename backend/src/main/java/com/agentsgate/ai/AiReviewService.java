@@ -37,13 +37,16 @@ public class AiReviewService {
     @Async
     @Transactional
     public void reviewAsync(UUID skillId) {
-        log.info("[AiReview] Starting review for skill: {}", skillId);
+        log.info("[AiReview] ===== Starting review for skill: {} =====", skillId);
 
         Skill skill = skillRepository.findById(skillId).orElse(null);
         if (skill == null) {
             log.warn("[AiReview] Skill not found: {}", skillId);
             return;
         }
+
+        log.info("[AiReview] Skill loaded: name='{}', type={}, version={}, tags={}",
+                skill.getName(), skill.getType(), skill.getVersion(), skill.getTags());
 
         // Mark as in-review
         skill.setStatus(SkillStatus.PENDING_AI_REVIEW);
@@ -52,10 +55,9 @@ public class AiReviewService {
         try {
             SkillReviewResult result = callAiReview(skill);
             applyReviewResult(skill, result);
-            log.info("[AiReview] Review complete for '{}': approved={}, issues={}",
-                    skill.getName(), result.approved(), result.issues().size());
         } catch (Exception e) {
-            log.error("[AiReview] AI review failed for skill '{}': {}", skill.getName(), e.getMessage(), e);
+            log.error("[AiReview] AI review failed for skill '{}' ({}): {}",
+                    skill.getName(), skillId, e.getMessage(), e);
             skill.setStatus(SkillStatus.DRAFT);
             skill.setReviewFeedback(buildErrorFeedback(e.getMessage()));
             skillRepository.save(skill);
@@ -75,12 +77,25 @@ public class AiReviewService {
         boolean reqSys = env != null && env.requiresSystemPackages();
 
         List<String> steps = skill.getInstallationSteps();
-        String stepsText = steps != null ? String.join(", ", steps) : "";
+        String stepsText = steps != null ? String.join("; ", steps) : "(none)";
 
         List<String> tags = skill.getTags();
-        String tagsText = tags != null ? String.join(", ", tags) : "";
+        String tagsText = tags != null ? String.join(", ", tags) : "(none)";
 
-        return aiService.review(
+        log.info("[AiReview] >>> Sending to AI - name='{}', type={}, description_len={}, " +
+                        "content_len={}, steps_count={}, tags='{}', " +
+                        "requiresInternet={}, requiresMcp={}, requiresLocal={}, requiresSys={}, hasMcpSpec={}",
+                skill.getName(), skill.getType(),
+                skill.getDescription() != null ? skill.getDescription().length() : 0,
+                content != null ? content.length() : 0,
+                steps != null ? steps.size() : 0,
+                tagsText,
+                reqInternet, reqMcp, reqLocal, reqSys, skill.isHasMcpSpec());
+
+        log.debug("[AiReview] >>> Content preview: {}", contentPreview);
+        log.debug("[AiReview] >>> Installation steps: {}", stepsText);
+
+        SkillReviewResult result = aiService.review(
                 skill.getName(),
                 skill.getType().name(),
                 skill.getDescription(),
@@ -94,6 +109,19 @@ public class AiReviewService {
                 reqSys,
                 skill.isHasMcpSpec()
         );
+
+        log.info("[AiReview] <<< AI Response - approved={}, summary='{}'",
+                result.approved(), result.summary());
+        if (!result.issues().isEmpty()) {
+            log.warn("[AiReview] <<< Issues ({}):", result.issues().size());
+            result.issues().forEach(issue -> log.warn("[AiReview]     - {}", issue));
+        }
+        if (!result.suggestions().isEmpty()) {
+            log.info("[AiReview] <<< Suggestions ({}):", result.suggestions().size());
+            result.suggestions().forEach(s -> log.info("[AiReview]     * {}", s));
+        }
+
+        return result;
     }
 
     private void applyReviewResult(Skill skill, SkillReviewResult result) {
@@ -105,16 +133,22 @@ public class AiReviewService {
 
         if (result.approved()) {
             skill.setStatus(SkillStatus.PENDING_HUMAN_REVIEW);
+            log.info("[AiReview] ===== '{}' APPROVED -> PENDING_HUMAN_REVIEW =====", skill.getName());
         } else {
             skill.setStatus(SkillStatus.REJECTED);
+            log.warn("[AiReview] ===== '{}' REJECTED (issues: {}) =====",
+                    skill.getName(), result.issues());
         }
 
         skillRepository.save(skill);
     }
 
     private String buildErrorFeedback(String errorMessage) {
-        return "{\"approved\":false,\"summary\":\"AI review service error\",\"issues\":[\""
-                + escapeJson(errorMessage) + "\"],\"suggestions\":[]}";
+        return "{\"approved\":false," +
+                "\"summary\":\"AI review service error\"," +
+                "\"userExplanation\":\"很抱歉，AI 審核服務在處理您的提交時發生了技術性錯誤，並非您的內容有問題。請稍後重新提交，若問題持續發生請聯繫平台管理員。\"," +
+                "\"issues\":[\"" + escapeJson(errorMessage) + "\"]," +
+                "\"suggestions\":[]}";
     }
 
     private String escapeJson(String value) {

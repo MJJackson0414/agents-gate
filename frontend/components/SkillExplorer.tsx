@@ -1,9 +1,54 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
-import { SkillResponse } from '@/lib/api';
+import { SkillResponse, SkillReviewResult, SkillDetailResponse, fetchSkillById } from '@/lib/api';
+
+const UPLOAD_DRAFT_KEY = 'agentsgate-upload-draft';
+
+function parseReviewFeedback(raw: string | null): SkillReviewResult | null {
+  if (!raw) return null;
+  try { return JSON.parse(raw) as SkillReviewResult; } catch { return null; }
+}
+
+function buildDraftFromDetail(detail: SkillDetailResponse) {
+  const env = detail.environmentDeclaration;
+  return {
+    type: detail.type.toLowerCase() as 'skill' | 'agent',
+    step: 1,
+    formData: {
+      name: detail.name,
+      description: detail.description,
+      version: detail.version,
+      changelog: detail.changelog ?? '',
+      tags: detail.tags ?? [],
+      authorName: detail.authorName ?? '',
+      authorEmail: detail.authorEmail ?? '',
+      content: detail.content ?? '',
+      installationSteps: detail.installationSteps?.length ? detail.installationSteps : [''],
+      dependencies: detail.dependencies ?? [],
+      osCompatibility: detail.osCompatibility ?? ['WINDOWS', 'MACOS'],
+      environmentDeclaration: {
+        requiresInternet: env?.requiresInternet ?? false,
+        requiresMcpServer: env?.requiresMcpServer ?? false,
+        requiresLocalService: env?.requiresLocalService ?? false,
+        requiresSystemPackages: env?.requiresSystemPackages ?? false,
+        additionalNotes: env?.additionalNotes ?? '',
+      },
+      mcpSpec: detail.mcpSpec
+        ? {
+            serverName: detail.mcpSpec.serverName,
+            command: detail.mcpSpec.command,
+            args: detail.mcpSpec.args ?? [],
+            env: detail.mcpSpec.env ?? {},
+          }
+        : null,
+      cliOverrides: detail.cliOverrides ?? {},
+    },
+  };
+}
 
 const PAGE_SIZE = 30;
 type TypeFilter = 'ALL' | 'SKILL' | 'AGENT';
@@ -144,9 +189,32 @@ export default function SkillExplorer({ initialSkills }: { initialSkills: SkillR
 }
 
 function SkillCard({ skill }: { skill: SkillResponse }) {
+  const router = useRouter();
   const isAgent = skill.type === 'AGENT';
+  const isRejected = skill.status === 'REJECTED';
+  const [showDetail, setShowDetail] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const feedback = parseReviewFeedback(skill.reviewFeedback ?? null);
+
+  async function handleRetry() {
+    setRetrying(true);
+    try {
+      const res = await fetchSkillById(skill.id);
+      if (res.success && res.data) {
+        const draft = buildDraftFromDetail(res.data);
+        localStorage.setItem(UPLOAD_DRAFT_KEY, JSON.stringify(draft));
+        router.push(`/upload/${draft.type}?step=1`);
+      }
+    } catch {
+      setRetrying(false);
+    }
+  }
+
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col gap-3">
+    <div className={clsx(
+      'bg-white border rounded-xl p-5 transition-shadow flex flex-col gap-3',
+      isRejected ? 'border-red-200 hover:shadow-md' : 'border-gray-200 hover:shadow-md'
+    )}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <span className="font-mono text-sm font-semibold text-gray-900 break-all">{skill.name}</span>
@@ -161,8 +229,9 @@ function SkillCard({ skill }: { skill: SkillResponse }) {
           </div>
         </div>
         <span className={clsx(
-          'shrink-0 text-xs px-2 py-0.5 rounded-full',
-          skill.status === 'PUBLISHED' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+          'shrink-0 text-xs px-2 py-0.5 rounded-full font-medium',
+          skill.status === 'PUBLISHED' ? 'bg-green-50 text-green-700' :
+          isRejected ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500'
         )}>
           {STATUS_LABEL[skill.status] ?? skill.status}
         </span>
@@ -194,6 +263,58 @@ function SkillCard({ skill }: { skill: SkillResponse }) {
           );
         })}
       </div>
+
+      {/* Rejection detail section */}
+      {isRejected && feedback && (
+        <div className="border-t border-red-100 pt-3 space-y-2">
+          <button
+            onClick={() => setShowDetail((v) => !v)}
+            className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium"
+          >
+            {showDetail ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            {showDetail ? '收起退回原因' : '查看退回原因'}
+          </button>
+
+          {showDetail && (
+            <div className="space-y-2">
+              {feedback.userExplanation && (
+                <p className="text-xs text-gray-800 bg-amber-50 border border-amber-200 rounded px-2.5 py-2 leading-relaxed">
+                  <span className="font-semibold text-amber-800">📋 退回說明：</span>{feedback.userExplanation}
+                </p>
+              )}
+              {feedback.issues.length > 0 && (
+                <div className="bg-red-50 rounded px-2.5 py-2">
+                  <p className="text-xs font-semibold text-red-700 mb-1">需要修正的問題：</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {feedback.issues.map((issue, i) => (
+                      <li key={i} className="text-xs text-red-600">{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {feedback.suggestions.length > 0 && (
+                <div className="bg-blue-50 rounded px-2.5 py-2">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">建議改善：</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {feedback.suggestions.map((s, i) => (
+                      <li key={i} className="text-xs text-blue-600">{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={handleRetry}
+            disabled={retrying}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            <RefreshCw size={11} className={retrying ? 'animate-spin' : ''} />
+            {retrying ? '載入中...' : '修改後重新上傳'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,7 +8,9 @@
       "Bash(powershell -NoProfile:*)",
       "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd dependency:resolve -q 2>&1 | Select-Object -Last 10 }\")",
       "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd dependency:resolve 2>&1 | Select-Object -Last 15 }\")",
-      "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd compile 2>&1 | Select-Object -Last 15 }\")"
+      "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd compile 2>&1 | Select-Object -Last 15 }\")",
+      "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd compile 2>&1 | Select-Object -Last 8 }\")",
+      "Bash(echo \"Exit: $?\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\jacks\\.claude\\projects\\d--workspace-AgentsGate",

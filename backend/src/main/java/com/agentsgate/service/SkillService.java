@@ -3,6 +3,7 @@ package com.agentsgate.service;
 import com.agentsgate.ai.AiReviewService;
 import com.agentsgate.domain.Skill;
 import com.agentsgate.domain.SkillStatus;
+import com.agentsgate.dto.SkillDetailResponse;
 import com.agentsgate.dto.SkillResponse;
 import com.agentsgate.dto.SkillUploadRequest;
 import com.agentsgate.repository.SkillRepository;
@@ -49,8 +50,8 @@ public class SkillService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<SkillResponse> findById(UUID id) {
-        return skillRepository.findById(id).map(SkillResponse::from);
+    public Optional<SkillDetailResponse> findById(UUID id) {
+        return skillRepository.findById(id).map(SkillDetailResponse::from);
     }
 
     private Skill mapRequestToEntity(SkillUploadRequest request) {

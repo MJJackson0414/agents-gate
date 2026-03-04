@@ -22,7 +22,11 @@ public interface SkillReviewAiService {
 
             Return a JSON object with exactly these fields:
             - approved: boolean (true if passes review and can proceed to human review)
-            - summary: string (1-2 sentence review summary)
+            - summary: string (1-2 sentence technical review summary in English)
+            - userExplanation: string (2-3 sentences written in Traditional Chinese directly to the submitter.
+              If rejected: explain in friendly plain language why it was rejected and what specific changes
+              they need to make to get it approved. If approved: write a brief encouraging message.
+              Always start with "您的" and address the user directly.)
             - issues: array of strings (critical problems that must be fixed; empty if approved)
             - suggestions: array of strings (optional improvement hints; can be empty)
             """)
