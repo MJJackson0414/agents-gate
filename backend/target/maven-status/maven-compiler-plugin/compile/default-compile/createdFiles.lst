@@ -1,0 +1,17 @@
+com\agentsgate\dto\ApiResponse.class
+com\agentsgate\api\SkillController.class
+com\agentsgate\domain\Skill.class
+com\agentsgate\service\SkillService.class
+com\agentsgate\dto\SkillUploadRequest$EnvironmentDeclarationDto.class
+com\agentsgate\domain\OsType.class
+com\agentsgate\dto\ApiResponse$Meta.class
+com\agentsgate\dto\SkillUploadRequest$McpSpecDto.class
+com\agentsgate\domain\SkillType.class
+com\agentsgate\domain\Skill$EnvironmentDeclaration.class
+com\agentsgate\AgentsGateApplication.class
+com\agentsgate\config\SecurityConfig.class
+com\agentsgate\dto\SkillUploadRequest.class
+com\agentsgate\domain\SkillStatus.class
+com\agentsgate\domain\Skill$McpSpec.class
+com\agentsgate\dto\SkillResponse.class
+com\agentsgate\repository\SkillRepository.class

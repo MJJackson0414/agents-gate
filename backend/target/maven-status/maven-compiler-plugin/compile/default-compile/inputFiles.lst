@@ -1,0 +1,12 @@
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\AgentsGateApplication.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\api\SkillController.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\SecurityConfig.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\OsType.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\Skill.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\SkillStatus.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\SkillType.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\ApiResponse.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\SkillResponse.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\SkillUploadRequest.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\repository\SkillRepository.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\service\SkillService.java
