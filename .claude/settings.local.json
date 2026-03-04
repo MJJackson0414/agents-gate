@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /d/workspace/AiTestDataFinding/csd-svc-ai-texttosql-agent log --oneline -10)",
+      "Bash(find /d/workspace/AiTestDataFinding -type f -name \"*.sh\" -exec head -5 {} ;)",
+      "Bash(git add CLAUDE.md .gitignore)",
+      "Bash(git add CLAUDE.md)",
+      "Bash(git commit:*)",
+      "Bash(# Check if there are rules files in .claude ls D:/workspace/AgentsGate/.claude/ # Check .clinerules structure ls D:/workspace/AgentsGate/.clinerules/workflows/)",
+      "WebFetch(domain:docs.github.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx create-next-app@latest frontend --typescript --tailwind --app --eslint --no-src-dir --no-import-alias --yes)",
+      "Bash(npm install lucide-react clsx)",
+      "Bash(npm run build)",
+      "Bash(npm install lightningcss@latest)",
+      "Bash(npm install lightningcss-win32-x64-msvc)",
+      "Bash(npm install @tailwindcss/oxide-win32-x64-msvc)",
+      "Bash(npm run type-check)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(./mvnw compile)",
+      "Bash(mvn --version)",
+      "Bash(where mvn)",
+      "Bash(cmd /c mvnw.cmd compile)",
+      "Bash(java -version)",
+      "Bash(curl -fsSL -o .mvn/wrapper/maven-wrapper.jar \"https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.3.2/maven-wrapper-3.3.2.jar\")",
+      "Bash(java -jar .mvn/wrapper/maven-wrapper.jar compile)",
+      "Bash(bash mvnw compile)",
+      "Bash(/c/Users/jacks/.m2/wrapper/dists/apache-maven-3.9.7-bin/3k9n615lchs6mp84v355m633uo/apache-maven-3.9.7/bin/mvn compile)",
+      "Bash(cmd /c \"mvnw.cmd --version\")",
+      "Bash(powershell -Command \"& { .\\\\mvnw.cmd --version 2>&1 }\")",
+      "Bash(powershell -Command \"& { .\\\\mvnw.cmd spring-boot:run 2>&1 | Select-Object -First 40 }\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { $p = Get-Process -Id $_OwningProcess -ErrorAction SilentlyContinue; [PSCustomObject]@{PID=$_OwningProcess; Name=$p.Name; Port=8080} }\")",
+      "Bash(netstat -ano)",
+      "Bash(powershell -Command \"netstat -ano | Select-String '':8080''\")",
+      "Bash(powershell -Command \"Get-Process -Id 13928 2>&1 | Select-Object Id, Name, MainWindowTitle, Path\")"
+    ]
+  }
+}
