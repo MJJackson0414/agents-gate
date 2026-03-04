@@ -1,5 +1,6 @@
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\AgentsGateApplication.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\api\SkillController.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\DataSeeder.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\SecurityConfig.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\OsType.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\Skill.java
