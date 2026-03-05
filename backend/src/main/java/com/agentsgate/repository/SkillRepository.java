@@ -14,4 +14,6 @@ public interface SkillRepository extends JpaRepository<Skill, UUID> {
     boolean existsByName(String name);
 
     List<Skill> findByStatus(SkillStatus status);
+
+    List<Skill> findByStatusNotIn(List<SkillStatus> statuses);
 }

@@ -82,6 +82,7 @@ export async function uploadSkill(payload: unknown): Promise<ApiResponse<SkillRe
 export async function fetchSkills(): Promise<ApiResponse<SkillResponse[]>> {
   const res = await fetch(`${API_BASE}/api/v1/skills`, {
     headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
   });
   return res.json() as Promise<ApiResponse<SkillResponse[]>>;
 }

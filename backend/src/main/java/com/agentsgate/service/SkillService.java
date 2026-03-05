@@ -44,7 +44,8 @@ public class SkillService {
 
     @Transactional(readOnly = true)
     public List<SkillResponse> listAll() {
-        return skillRepository.findAll().stream()
+        return skillRepository.findByStatusNotIn(List.of(SkillStatus.DRAFT, SkillStatus.REJECTED))
+                .stream()
                 .map(SkillResponse::from)
                 .toList();
     }
