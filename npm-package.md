@@ -1,6 +1,6 @@
-# 透過 npm / npx 發布與封裝 Claude Skill 教學
+# 透過 npm / npx 發布與封裝 Claude/Gemini Skill 教學
 
-這份教學文件將引導你如何將撰寫好的 `SKILL.md` 封裝成一個 Node.js 套件，並發布至 npm 平台，讓其他人可以透過簡單的 `npx` 指令下載並安裝你的 Skill。
+這份教學文件將引導你如何將撰寫好的 `SKILL.md` 封裝成一個 Node.js 套件，並發布至 npm 平台，讓其他人可以透過簡單的 `npx` 指令進入**互動式選單**下載並安裝你的 Skill。
 
 ## 1. 專案結構
 
@@ -10,13 +10,14 @@
 your-skill-project/
 ├── package.json      # 套件設定檔（宣告名稱、版本與執行的腳本）
 ├── SKILL.md          # 你的核心 Skill 內容
+├── config.json       # 動態問答設定檔（定義使用者安裝時需要填寫的參數）
 └── bin/
-    └── index.js      # npx 執行時觸發的安裝腳本
+    └── index.js      # npx 執行時觸發的安裝腳本 (處理互動選單與動態替換)
 ```
 
-## 2. 建立 package.json
+## 2. 建立與設定 package.json
 
-`package.json` 是 npm 套件的核心。你需要特別注意 `name` (套件名稱必須在 npm 上唯一) 以及 `bin` (設定 npx 執行的路徑)。
+`package.json` 是 npm 套件的核心。你需要特別注意 `name` (套件名稱必須在 npm 上唯一) 以及 `bin` (設定 npx 執行的路徑)。並且記得在 `files` 中包含所有會用到的檔案。
 
 ```json
 {
@@ -29,73 +30,77 @@ your-skill-project/
   "keywords": [
     "ai",
     "skill",
-    "claude"
+    "claude",
+    "gemini"
   ],
   "author": "Your Name",
   "license": "MIT",
   "files": [
     "bin/index.js",
-    "SKILL.md"
+    "SKILL.md",
+    "config.json"
   ]
 }
 ```
 
-> **注意：** `files` 陣列定義了發布到 npm 時要包含的檔案，請確保有包含 `bin/index.js` 與 `SKILL.md`。
+## 3. 設定動態安裝參數 (`config.json`)
 
-## 3. 撰寫安裝腳本 (`bin/index.js`)
+這套系統支援在使用者安裝時，透過命令列互動取得他們專屬的設定（例如 API Token、偏好模型等），並將這些設定塞進 `SKILL.md`。
 
-當使用者執行 `npx <你的套件名稱>` 時，系統會下載套件並執行這支腳本。腳本的功能是將 `SKILL.md` 複製到使用者專案中的 `.claude/skills/<skill-name>` 目錄下。
+編輯根目錄下的 `config.json`，根據需求定義要詢問使用者的問題：
 
-建立 `bin/index.js`，內容如下：
-
-```javascript
-#!/usr/bin/env node
-
-const fs = require('fs');
-const path = require('path');
-
-// 設定要複製到的目標路徑，預設複製到執行指令的使用者專案目錄下
-const skillName = 'skill-lookup'; // 你的 skill 目錄名稱
-const targetDir = path.join(process.cwd(), '.claude', 'skills', skillName);
-
-// 來源檔案位置 (`__dirname` 就是 bin 目錄)
-const sourceFile = path.join(__dirname, '..', 'SKILL.md');
-const targetFile = path.join(targetDir, 'SKILL.md');
-
-try {
-  // 建立目標資料夾（如果不存在的話，包含上層的 .claude/skills）
-  fs.mkdirSync(targetDir, { recursive: true });
-
-  // 複製 SKILL.md 檔案
-  fs.copyFileSync(sourceFile, targetFile);
-  
-  console.log('\x1b[32m%s\x1b[0m', `✅ 成功安裝 ${skillName}！`);
-  console.log(`📂 檔案已儲存至: ${targetFile}`);
-} catch (err) {
-  console.error('\x1b[31m%s\x1b[0m', `❌ 安裝 ${skillName} 發生錯誤:`, err.message);
-  process.exit(1);
-}
+```json
+[
+  {
+    "key": "TOKEN",
+    "prompt": "請輸入您的 API Token (若無請直接按 Enter 跳過): "
+  },
+  {
+    "key": "MODEL",
+    "prompt": "請輸入您的偏好模型 (例如 gemini-2.5-flash): "
+  }
+]
 ```
 
-> **重要步驟：** 你必須為這個腳本加入可執行權限。
-> 在終端機執行：`chmod +x bin/index.js`
+## 4. 在文件內宣告動態變數 (`SKILL.md`)
 
-## 4. 在本地測試套件 (Local Testing)
+定義好 `config.json` 之後，你可以在腳本 `SKILL.md` 的任何角落放置對應的佔位符號 `{{KEY}}`。安裝時系統便會全自動將它取代為使用者輸入的內容：
+
+```markdown
+# 這是我的 AI Skill
+使用者需要使用的 Token 是： {{TOKEN}}
+AI 將會採用此模型： {{MODEL}}
+```
+
+> **機制說明：** 
+> 1. 當使用者安裝輸入 Token 後，文件內的 `{{TOKEN}}` 就會直接變成該字串。
+> 2. 如果使用者有填寫參數，但你在 `SKILL.md` 裡面 **忘記放對應的標籤**，系統會自動在文件最底端加上一個 `## 動態安裝帶入的使用者設定` 的區塊紀錄起來，確保資料不會遺失！
+
+## 5. 互動式安裝腳本 (`bin/index.js`)
+
+系統內建強大的 `bin/index.js` 互動腳本，提供了以下絕佳的安裝體驗：
+
+- **多重路徑支援**：支援使用「上下鍵」移動與「空白鍵」複選安裝路徑（.claude/skills、.gemini/skills，或是自訂路徑）。
+- **動態參數讀取**：自動解析剛剛設定好的 `config.json` 進行一連串提問。
+- **寫入與取代**：一鍵將修改好的 `SKILL.md` 佈署到使用者選定的所有 AI 目錄中。
+
+*(開發注意：確保你的 `bin/index.js` 已具備執行權限，可透過 `chmod +x bin/index.js` 設定)*
+
+## 6. 在本地測試套件 (Local Testing)
 
 在正式發布之前，建議先在本地測試腳本是否運作正常。
 
-1. 在你的專案目錄 (`your-skill-project/`) 執行以下指令，這會將你的套件連結到全域：
+1. 在你的專案目錄執行以下指令，這會將你的套件連結到全域：
    ```bash
    npm link
    ```
-2. 開啟另一個新的空白資料夾（模擬使用者的環境）。
-3. 執行你定義在 `package.json` 中的 `bin` 指令（也可以直接模擬 npx）：
+2. 執行你定義在 `package.json` 中的 `bin` 指令測試互動選單：
    ```bash
    install-skill-lookup
    ```
-4. 檢查該資料夾下是否成功產生了 `.claude/skills/skill-lookup/SKILL.md` 檔案。
+3. 按照畫面提示進行勾選與填寫，檢查安裝後的 `SKILL.md` 是否有如期動態取代。
 
-## 5. 發布至 npm 平台
+## 7. 發布至 npm 平台
 
 確定本地測試沒問題後，就可以將套件公開發布。
 
@@ -104,14 +109,13 @@ try {
    ```bash
    npm login
    ```
-   *系統會開啟瀏覽器或提示你輸入帳號、密碼及 OTP 認證碼。*
 3. **發布套件**：
    ```bash
    npm publish
    ```
-   *如果出現名稱衝突（403 Forbidden 或類似錯誤），表示 `package.json` 的 `name` 已經被別人用過了，請改名後再試。*
+   *如果出現名稱衝突（例如 403 Forbidden），表示 `package.json` 的 `name` 已經被別人用過了，請改名後再試。*
 
-## 6. 提供給其他人使用
+## 8. 提供給其他人使用
 
 發布成功後，你就可以將這個指令分享給其他人了。
 其他人只需要在他們的終端機（任何專案目錄下）執行：
@@ -119,9 +123,8 @@ try {
 ```bash
 npx your-unique-skill-lookup
 ```
-*(請將 `your-unique-skill-lookup` 替換成你實際發布的 npm 套件名稱)*
 
 系統就會自動：
 1. 下載你的套件。
-2. 執行你的 `bin/index.js` 安裝腳本。
-3. 把 `SKILL.md` 放進他們專案的 `.claude/skills/` 目錄中。
+2. 觸發強大的互動命令列，讓使用者勾選 Claude / Gemini，並填寫所需的 `TOKEN` 等動態參數。
+3. 把客製化完成的 `SKILL.md` 自動部署到他們的開發環境中！
