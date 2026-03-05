@@ -42,3 +42,18 @@ Thumbs.db
 *.pem
 *.key
 credentials.json
+
+
+# 忽略所有 .class 檔案
+*.class
+
+# 忽略常見的編譯輸出目錄
+bin/
+target/
+out/
+
+# 如果你使用 VS Code，也可以忽略其生成的設定資料夾
+.settings/
+.project
+.classpath
+.factorypath
