@@ -25,7 +25,7 @@ export interface SkillResponse {
   name: string;
   type: 'SKILL' | 'AGENT';
   description: string;
-  status: 'DRAFT' | 'PENDING_AI_REVIEW' | 'PENDING_HUMAN_REVIEW' | 'PUBLISHED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING_AI_REVIEW' | 'PENDING_HUMAN_REVIEW' | 'AI_REJECTED_REVIEW' | 'PUBLISHED' | 'REJECTED';
   version: string;
   tags: string[];
   hasMcpSpec: boolean;

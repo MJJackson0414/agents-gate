@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { clsx } from 'clsx';
 
 const STEPS = [
@@ -17,6 +18,13 @@ interface WizardLayoutProps {
 export default function WizardLayout({ currentStep, children }: WizardLayoutProps) {
   return (
     <div className="max-w-2xl mx-auto py-10 px-4">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-6"
+      >
+        ← 返回首頁
+      </Link>
+
       {/* 步驟指示器 */}
       <nav className="flex items-center justify-between mb-10">
         {STEPS.map((step, idx) => (

@@ -185,6 +185,9 @@ public class AiReviewService {
             String json = extractJsonBlock(raw);
             // Sanitize: replace backticks that may break JSON string parsing
             json = json.replace("`", "'");
+            // Sanitize: collapse literal newlines/carriage-returns inside string values
+            // (LLMs sometimes emit unescaped newlines which are invalid in JSON strings)
+            json = json.replace("\r\n", " ").replace("\n", " ").replace("\r", " ");
             return objectMapper.readValue(json, SkillReviewResult.class);
         } catch (Exception e) {
             log.warn("[AiReview] Failed to parse AI JSON response: {}. Raw (first 500 chars): {}",
