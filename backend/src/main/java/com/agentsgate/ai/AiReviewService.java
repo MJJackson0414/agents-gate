@@ -65,50 +65,85 @@ public class AiReviewService {
     }
 
     private SkillReviewResult callAiReview(Skill skill) {
-        String content = skill.getContent();
-        String contentPreview = content != null && content.length() > 500
-                ? content.substring(0, 500) + "..."
-                : content;
+        String content = skill.getContent() != null ? skill.getContent() : "";
 
         var env = skill.getEnvironmentDeclaration();
         boolean reqInternet = env != null && env.requiresInternet();
         boolean reqMcp = env != null && env.requiresMcpServer();
         boolean reqLocal = env != null && env.requiresLocalService();
         boolean reqSys = env != null && env.requiresSystemPackages();
+        String additionalNotes = (env != null && env.additionalNotes() != null)
+                ? env.additionalNotes() : "(none)";
 
         List<String> steps = skill.getInstallationSteps();
-        String stepsText = steps != null ? String.join("; ", steps) : "(none)";
+        String stepsText = (steps != null && !steps.isEmpty())
+                ? String.join("\n", steps) : "(none)";
 
         List<String> tags = skill.getTags();
         String tagsText = tags != null ? String.join(", ", tags) : "(none)";
 
-        log.info("[AiReview] >>> Sending to AI - name='{}', type={}, description_len={}, " +
-                        "content_len={}, steps_count={}, tags='{}', " +
-                        "requiresInternet={}, requiresMcp={}, requiresLocal={}, requiresSys={}, hasMcpSpec={}",
-                skill.getName(), skill.getType(),
-                skill.getDescription() != null ? skill.getDescription().length() : 0,
-                content != null ? content.length() : 0,
-                steps != null ? steps.size() : 0,
-                tagsText,
-                reqInternet, reqMcp, reqLocal, reqSys, skill.isHasMcpSpec());
+        List<String> deps = skill.getDependencies();
+        String depsText = (deps != null && !deps.isEmpty())
+                ? String.join(", ", deps) : "(none)";
 
-        log.debug("[AiReview] >>> Content preview: {}", contentPreview);
-        log.debug("[AiReview] >>> Installation steps: {}", stepsText);
+        List<?> os = skill.getOsCompatibility();
+        String osText = (os != null && !os.isEmpty())
+                ? os.stream().map(Object::toString).reduce((a, b) -> a + ", " + b).orElse("(none)")
+                : "(none)";
 
-        SkillReviewResult result = aiService.review(
-                skill.getName(),
+        List<Skill.VariableDefinition> vars = skill.getVariables();
+        String variablesText = (vars != null && !vars.isEmpty())
+                ? vars.stream().map(v -> String.format(
+                        "  {%s}: description=%s, example=%s",
+                        v.name(),
+                        v.description() != null ? v.description() : "(none)",
+                        v.example() != null ? v.example() : "(none)"))
+                  .reduce((a, b) -> a + "\n" + b).orElse("(none)")
+                : "(none)";
+
+        List<Skill.AttachedFile> files = skill.getAttachedFiles();
+        String attachedFilesText = (files != null && !files.isEmpty())
+                ? files.stream().map(f -> "  " + f.filename())
+                  .reduce((a, b) -> a + "\n" + b).orElse("(none)")
+                : "(none)";
+
+        log.info("[AiReview] >>> ===== Full prompt sent to AI =====");
+        log.info("[AiReview]   1. Name       : {}", skill.getName());
+        log.info("[AiReview]   2. Type       : {}", skill.getType());
+        log.info("[AiReview]   3. Description: {}", skill.getDescription());
+        log.info("[AiReview]   4. Version    : {}", skill.getVersion());
+        log.info("[AiReview]   5. Tags       : {}", tagsText);
+        log.info("[AiReview]   6. OS         : {}", osText);
+        log.info("[AiReview]   7. Deps       : {}", depsText);
+        log.info("[AiReview]   8. Environment: internet={}, mcp={}, local={}, sys={}, notes='{}'",
+                reqInternet, reqMcp, reqLocal, reqSys, additionalNotes);
+        log.info("[AiReview]   9. Has MCP    : {}", skill.isHasMcpSpec());
+        log.info("[AiReview]  10. Content ({} chars):\n{}", content.length(), content);
+        log.info("[AiReview]  11. Install Steps:\n{}", stepsText);
+        log.info("[AiReview]  12. Variables ({}):\n{}", vars != null ? vars.size() : 0, variablesText);
+        log.info("[AiReview]  13. Attached Files ({}):\n{}", files != null ? files.size() : 0, attachedFilesText);
+        log.info("[AiReview] >>> =====================================");
+
+        String rawJson = aiService.review(
                 skill.getType().name(),
+                skill.getName(),
                 skill.getDescription(),
-                tagsText,
                 skill.getVersion(),
-                contentPreview,
+                tagsText,
+                osText,
+                depsText,
+                content,
                 stepsText,
                 reqInternet,
                 reqMcp,
                 reqLocal,
                 reqSys,
-                skill.isHasMcpSpec()
+                additionalNotes,
+                skill.isHasMcpSpec(),
+                variablesText,
+                attachedFilesText
         );
+        SkillReviewResult result = parseAiResponse(rawJson);
 
         log.info("[AiReview] <<< AI Response - approved={}, summary='{}'",
                 result.approved(), result.summary());
@@ -141,6 +176,32 @@ public class AiReviewService {
         }
 
         skillRepository.save(skill);
+    }
+
+    private SkillReviewResult parseAiResponse(String raw) {
+        try {
+            String json = extractJsonBlock(raw);
+            // Sanitize: replace backticks that may break JSON string parsing
+            json = json.replace("`", "'");
+            return objectMapper.readValue(json, SkillReviewResult.class);
+        } catch (Exception e) {
+            log.warn("[AiReview] Failed to parse AI JSON response: {}. Raw (first 500 chars): {}",
+                    e.getMessage(), raw != null && raw.length() > 500 ? raw.substring(0, 500) : raw);
+            return new SkillReviewResult(
+                    false,
+                    "AI response JSON parse error",
+                    "AI 審核服務回應格式異常，無法解析審核結果。請稍後重新提交；若問題持續發生請聯繫平台管理員。",
+                    List.of("AI 回應格式錯誤，無法完成本次審核"),
+                    List.of()
+            );
+        }
+    }
+
+    private String extractJsonBlock(String text) {
+        if (text == null) return "{}";
+        int start = text.indexOf('{');
+        int end = text.lastIndexOf('}');
+        return (start >= 0 && end > start) ? text.substring(start, end + 1) : text;
     }
 
     private String buildErrorFeedback(String errorMessage) {

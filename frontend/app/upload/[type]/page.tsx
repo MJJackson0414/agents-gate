@@ -1,7 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useSearchParams, useParams, notFound } from 'next/navigation';
-import { UploadProvider } from '@/lib/upload-context';
+import { UploadProvider, useUpload, SkillType } from '@/lib/upload-context';
 import WizardLayout from '@/components/upload/WizardLayout';
 import WizardStep1Basic from '@/components/upload/WizardStep1Basic';
 import WizardStep2Content from '@/components/upload/WizardStep2Content';
@@ -10,6 +11,18 @@ import WizardStep4Preview from '@/components/upload/WizardStep4Preview';
 
 const VALID_TYPES = ['skill', 'agent'] as const;
 type ValidType = typeof VALID_TYPES[number];
+
+/** Syncs the URL :type param into the upload context state. */
+function TypeSync({ type }: { type: ValidType }) {
+  const { state, setSkillType } = useUpload();
+  useEffect(() => {
+    if (state.type !== type) {
+      setSkillType(type as SkillType);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
+  return null;
+}
 
 export default function UploadWizardPage() {
   const params = useParams();
@@ -26,6 +39,7 @@ export default function UploadWizardPage() {
 
   return (
     <UploadProvider>
+      <TypeSync type={typeParam as ValidType} />
       <WizardLayout currentStep={validStep as 1 | 2 | 3 | 4}>
         {validStep === 1 && <WizardStep1Basic />}
         {validStep === 2 && <WizardStep2Content />}

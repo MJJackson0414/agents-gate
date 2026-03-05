@@ -39,6 +39,10 @@ export interface UploadFormData {
   // 選填
   cliOverrides: Record<string, string>;
   changelog: string;
+  // Skill 變數（content 中的 {VAR_NAME} 佔位符）
+  variables: { name: string; description: string; example: string }[];
+  // 附加檔案（補充腳本）
+  attachedFiles: { filename: string; content: string }[];
 }
 
 export interface UploadState {
@@ -80,6 +84,8 @@ const INITIAL_STATE: UploadState = {
     mcpSpec: null,
     cliOverrides: {},
     changelog: '初始版本。',
+    variables: [],
+    attachedFiles: [],
   },
   errors: {},
   isDirty: false,

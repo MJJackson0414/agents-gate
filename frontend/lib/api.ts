@@ -65,6 +65,8 @@ export interface SkillDetailResponse {
   } | null;
   cliOverrides: Record<string, string> | null;
   content: string;
+  variables: { name: string; description: string; example: string }[] | null;
+  attachedFiles: { filename: string; content: string }[] | null;
   createdAt: string;
 }
 

@@ -67,9 +67,24 @@ public record SkillUploadRequest(
         @Valid
         McpSpecDto mcpSpec,
 
-        Map<String, String> cliOverrides
+        Map<String, String> cliOverrides,
+
+        List<VariableDefinitionDto> variables,
+
+        List<AttachedFileDto> attachedFiles
 
 ) {
+
+    public record VariableDefinitionDto(
+            String name,
+            String description,
+            String example
+    ) {}
+
+    public record AttachedFileDto(
+            String filename,
+            String content
+    ) {}
 
     public record EnvironmentDeclarationDto(
             boolean requiresInternet,

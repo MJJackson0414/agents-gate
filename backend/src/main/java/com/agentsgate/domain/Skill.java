@@ -84,6 +84,16 @@ public class Skill {
     @Column(columnDefinition = "jsonb")
     private Map<String, String> cliOverrides;
 
+    // User-configurable variables declared in content as {VAR_NAME}
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private List<VariableDefinition> variables;
+
+    // Supplementary script files attached to this skill
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private List<AttachedFile> attachedFiles;
+
     // AI review feedback stored as JSON (SkillReviewResult)
     @Column(columnDefinition = "TEXT")
     private String reviewFeedback;
@@ -115,6 +125,17 @@ public class Skill {
             String command,
             List<String> args,
             Map<String, String> env
+    ) {}
+
+    public record VariableDefinition(
+            String name,
+            String description,
+            String example
+    ) {}
+
+    public record AttachedFile(
+            String filename,
+            String content
     ) {}
 
     // Getters and setters
@@ -173,6 +194,12 @@ public class Skill {
 
     public Map<String, String> getCliOverrides() { return cliOverrides; }
     public void setCliOverrides(Map<String, String> cliOverrides) { this.cliOverrides = cliOverrides; }
+
+    public List<VariableDefinition> getVariables() { return variables; }
+    public void setVariables(List<VariableDefinition> variables) { this.variables = variables; }
+
+    public List<AttachedFile> getAttachedFiles() { return attachedFiles; }
+    public void setAttachedFiles(List<AttachedFile> attachedFiles) { this.attachedFiles = attachedFiles; }
 
     public boolean isHasMcpSpec() { return hasMcpSpec; }
 

@@ -22,10 +22,18 @@ function parseFeedback(raw: string | null): SkillReviewResult | null {
   try { return JSON.parse(raw) as SkillReviewResult; } catch { return null; }
 }
 
-function ReviewStatusCard({ skillId }: { skillId: string }) {
+function ReviewStatusCard({
+  skillId,
+  onFinalStatus,
+}: {
+  skillId: string;
+  onFinalStatus?: (status: string) => void;
+}) {
   const [skill, setSkill] = useState<SkillDetailResponse | null>(null);
   const [pollError, setPollError] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onFinalStatusRef = useRef(onFinalStatus);
+  onFinalStatusRef.current = onFinalStatus;
 
   useEffect(() => {
     const poll = async () => {
@@ -35,6 +43,7 @@ function ReviewStatusCard({ skillId }: { skillId: string }) {
           setSkill(res.data);
           if (TERMINAL_STATUSES.includes(res.data.status)) {
             if (pollRef.current) clearInterval(pollRef.current);
+            onFinalStatusRef.current?.(res.data.status);
           }
         }
       } catch {
@@ -130,6 +139,7 @@ export default function WizardStep4Preview() {
   const [activeTab, setActiveTab] = useState<CliTarget>('claude');
   const [copiedTab, setCopiedTab] = useState<CliTarget | null>(null);
   const [submitResult, setSubmitResult] = useState<{ success: boolean; id?: string; error?: string } | null>(null);
+  const [reviewStatus, setReviewStatus] = useState<string | null>(null);
 
   const adapters = type ? generateAdapters(formData, type) : [];
   const validationIssues = clientValidate(formData as Record<string, unknown>);
@@ -169,13 +179,14 @@ export default function WizardStep4Preview() {
         environmentDeclaration: formData.environmentDeclaration,
         mcpSpec: formData.mcpSpec ?? null,
         cliOverrides: formData.cliOverrides ?? {},
+      variables: formData.variables ?? [],
+      attachedFiles: formData.attachedFiles ?? [],
       };
 
       const result = await uploadSkill(payload);
 
       if (result.success && result.data) {
         setSubmitResult({ success: true, id: result.data.id });
-        reset();
       } else {
         const fieldErrors = result.meta?.fieldErrors;
         if (fieldErrors) setErrors(fieldErrors);
@@ -201,16 +212,27 @@ export default function WizardStep4Preview() {
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">審核進度</h3>
-          <ReviewStatusCard skillId={submitResult.id} />
+          <ReviewStatusCard skillId={submitResult.id} onFinalStatus={setReviewStatus} />
         </div>
-        <div className="text-center">
-          <button
-            onClick={() => router.push('/upload')}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-          >
-            再次上傳
-          </button>
-        </div>
+        {reviewStatus && (
+          <div className="text-center space-y-2">
+            {reviewStatus === 'REJECTED' ? (
+              <button
+                onClick={() => router.push(`/upload/${type}?step=1`)}
+                className="px-6 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600"
+              >
+                ✏️ 修改並重新提交
+              </button>
+            ) : (
+              <button
+                onClick={() => { reset(); router.push('/upload'); }}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+              >
+                再次上傳（新內容）
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   }

@@ -20,9 +20,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 首頁瀏覽 + 搜尋 + 分頁 | ✅ P0 完成 | SkillExplorer |
 | 範例資料 Seed | ✅ P0 完成 | 54 個 BMAD Skills |
 | CLI 適配檔案預覽 | ✅ P0 完成 | 前端產生（客戶端）|
+| 變數 & 附加檔案（上傳精靈） | ✅ P1 完成 | Step2 自動偵測 `{VAR}` / `$VAR`，附加腳本 |
+| AI 初審（LangChain4j） | ✅ P1 完成 | 非同步審核，Claude Sonnet 4.6，JSON 解析防護 |
+| 人工審核後台 | ⬜ P1 | 管理員 UI，審核 PENDING_HUMAN_REVIEW 清單 |
 | CLI 下載套件封裝 | ⬜ P1 | 後端 packaging service |
-| AI 初審（LangChain4j） | ⬜ P1 | 審核流程 |
-| 人工審核後台 | ⬜ P1 | 管理員 UI |
 | MongoDB 語義搜尋 | ⬜ P2 | Embedding + RAG |
 | 使用者認證（JWT） | ⬜ P2 | NextAuth + Spring Security |
 | 版本歷史 | ⬜ P2 | SemVer 管理 |
@@ -208,6 +209,8 @@ inclusion: always
 | `environmentDeclaration` | 環境需求宣告（巢狀物件） | ✅ | 見下方 |
 | `mcpSpec` | MCP Server 規格 | 選填 | 見下方 |
 | `cliOverrides` | 各 CLI 客製化描述 | 選填 | Map<String, String> |
+| `variables` | 使用者可配置參數（名稱、說明、範例值） | 選填 | `{VAR_NAME}` / `$VAR_NAME` 自動偵測 |
+| `attachedFiles` | 附加腳本或設定檔（檔名 + 內容） | 選填 | 不進行 AI 安全審查，由提交者自負 |
 
 #### environmentDeclaration 欄位
 
@@ -241,10 +244,14 @@ mcpSpec 為空 → hasMcpSpec = false → 全 CLI 相容 ✅
 
 ```
 DRAFT → PENDING_AI_REVIEW → PENDING_HUMAN_REVIEW → PUBLISHED
-                                                  → REJECTED
+                          → REJECTED（AI 不核准）
 ```
 
-目前 P0：所有上傳直接存為 `DRAFT`。P1 再串接 AI 初審。
+- 上傳後立即觸發 `AiReviewService.reviewAsync()`（Spring `@Async`）
+- AI 審核由 `SkillReviewAiService`（LangChain4j interface）呼叫 Claude Sonnet 4.6
+- AI 核准 → `PENDING_HUMAN_REVIEW`；AI 拒絕 → `REJECTED`
+- 審核結果以 JSON 存入 `reviewFeedback` 欄位（`SkillReviewResult` 結構）
+- **下一步**：人工審核後台，管理員可將 `PENDING_HUMAN_REVIEW` → `PUBLISHED` 或 `REJECTED`
 
 ### 4. 首頁搜尋邏輯（客戶端）
 
@@ -306,6 +313,10 @@ AgentsGate/
 │   │   │   └── SkillRepository.java       # JpaRepository<Skill, UUID>
 │   │   ├── service/
 │   │   │   └── SkillService.java          # uploadSkill() / listAll()
+│   │   ├── ai/
+│   │   │   ├── AiReviewService.java       # @Async 審核協調器（觸發、狀態流轉、錯誤處理）
+│   │   │   ├── SkillReviewAiService.java  # LangChain4j interface（@SystemMessage / @UserMessage）
+│   │   │   └── SkillReviewResult.java     # 審核結果 record（approved, summary, issues...）
 │   │   └── config/
 │   │       ├── SecurityConfig.java        # CORS 設定，目前全開放
 │   │       └── DataSeeder.java            # 啟動時 seed 54 個 BMAD Skills

@@ -34,6 +34,8 @@ public record SkillDetailResponse(
         Skill.McpSpec mcpSpec,
         Map<String, String> cliOverrides,
         String content,
+        List<Skill.VariableDefinition> variables,
+        List<Skill.AttachedFile> attachedFiles,
         LocalDateTime createdAt
 ) {
     public static SkillDetailResponse from(Skill skill) {
@@ -57,6 +59,8 @@ public record SkillDetailResponse(
                 skill.getMcpSpec(),
                 skill.getCliOverrides(),
                 skill.getContent(),
+                skill.getVariables(),
+                skill.getAttachedFiles(),
                 skill.getCreatedAt()
         );
     }

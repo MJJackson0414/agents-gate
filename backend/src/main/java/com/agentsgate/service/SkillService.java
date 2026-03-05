@@ -92,6 +92,18 @@ public class SkillService {
             ));
         }
 
+        if (request.variables() != null) {
+            skill.setVariables(request.variables().stream()
+                    .map(v -> new Skill.VariableDefinition(v.name(), v.description(), v.example()))
+                    .toList());
+        }
+
+        if (request.attachedFiles() != null) {
+            skill.setAttachedFiles(request.attachedFiles().stream()
+                    .map(f -> new Skill.AttachedFile(f.filename(), f.content()))
+                    .toList());
+        }
+
         return skill;
     }
 }
