@@ -2,6 +2,7 @@ D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\AgentsGateApplicati
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\ai\AiReviewService.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\ai\SkillReviewAiService.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\ai\SkillReviewResult.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\api\AdminController.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\api\SkillController.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\AiConfig.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\config\AsyncConfig.java
@@ -11,9 +12,13 @@ D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\OsType.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\Skill.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\SkillStatus.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\domain\SkillType.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\AdminReviewResponse.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\AdminVerifyRequest.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\ApiResponse.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\SkillDetailResponse.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\SkillResponse.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\dto\SkillUploadRequest.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\repository\SkillRepository.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\service\AdminAuthService.java
+D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\service\AdminReviewService.java
 D:\workspace\AgentsGate\backend\src\main\java\com\agentsgate\service\SkillService.java

@@ -4,6 +4,7 @@ com\agentsgate\dto\SkillUploadRequest$EnvironmentDeclarationDto.class
 com\agentsgate\domain\SkillType.class
 com\agentsgate\domain\Skill.class
 com\agentsgate\service\SkillService.class
+com\agentsgate\api\AdminController$1.class
 com\agentsgate\domain\OsType.class
 com\agentsgate\dto\ApiResponse$Meta.class
 com\agentsgate\dto\SkillUploadRequest$McpSpecDto.class

@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { fetchSkills, SkillResponse } from '@/lib/api';
 import SkillExplorer from '@/components/SkillExplorer';
+import HomeHeader from '@/components/HomeHeader';
 
 async function getSkills(): Promise<SkillResponse[]> {
   try {
@@ -16,21 +16,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">AgentsGate</h1>
-            <p className="text-xs text-gray-400">上傳一次，適配所有 CLI</p>
-          </div>
-          <Link
-            href="/upload"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            + 上傳 Skill / Agent
-          </Link>
-        </div>
-      </header>
+      <HomeHeader />
 
       <main className="max-w-6xl mx-auto px-6 py-10">
         {/* Hero */}

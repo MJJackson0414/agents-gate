@@ -15,5 +15,7 @@ public interface SkillRepository extends JpaRepository<Skill, UUID> {
 
     List<Skill> findByStatus(SkillStatus status);
 
+    List<Skill> findByStatusIn(List<SkillStatus> statuses);
+
     List<Skill> findByStatusNotIn(List<SkillStatus> statuses);
 }

@@ -15,7 +15,9 @@ import java.util.UUID;
 
 /**
  * Asynchronously reviews a skill submission using the AI service.
- * Flow: DRAFT -> PENDING_AI_REVIEW -> PENDING_HUMAN_REVIEW | REJECTED
+ * Flow: DRAFT -> PENDING_AI_REVIEW -> PENDING_HUMAN_REVIEW (AI pass) | AI_REJECTED_REVIEW (AI fail)
+ *        Both PENDING_HUMAN_REVIEW and AI_REJECTED_REVIEW are visible to human reviewers.
+ *        Final PUBLISHED or REJECTED is determined by human review.
  */
 @Service
 public class AiReviewService {
@@ -168,10 +170,10 @@ public class AiReviewService {
 
         if (result.approved()) {
             skill.setStatus(SkillStatus.PENDING_HUMAN_REVIEW);
-            log.info("[AiReview] ===== '{}' APPROVED -> PENDING_HUMAN_REVIEW =====", skill.getName());
+            log.info("[AiReview] ===== '{}' AI APPROVED -> PENDING_HUMAN_REVIEW =====", skill.getName());
         } else {
-            skill.setStatus(SkillStatus.REJECTED);
-            log.warn("[AiReview] ===== '{}' REJECTED (issues: {}) =====",
+            skill.setStatus(SkillStatus.AI_REJECTED_REVIEW);
+            log.warn("[AiReview] ===== '{}' AI REJECTED -> AI_REJECTED_REVIEW (issues: {}) =====",
                     skill.getName(), result.issues());
         }
 

@@ -253,7 +253,19 @@ DRAFT → PENDING_AI_REVIEW → PENDING_HUMAN_REVIEW → PUBLISHED
 - 審核結果以 JSON 存入 `reviewFeedback` 欄位（`SkillReviewResult` 結構）
 - **下一步**：人工審核後台，管理員可將 `PENDING_HUMAN_REVIEW` → `PUBLISHED` 或 `REJECTED`
 
-### 4. 首頁搜尋邏輯（客戶端）
+### 4. 首頁可見性規則
+
+`GET /api/v1/skills` 以 `findByStatusNotIn(DRAFT, REJECTED)` 過濾，只回傳：
+
+| 狀態 | 首頁顯示 | 說明 |
+|------|----------|------|
+| `PUBLISHED` | ✅ | 完整顯示，可下載 |
+| `PENDING_AI_REVIEW` | ✅ | 顯示但無下載入口 |
+| `PENDING_HUMAN_REVIEW` | ✅ | 顯示但無下載入口 |
+| `DRAFT` | ❌ | 不顯示 |
+| `REJECTED` | ❌ | 不顯示 |
+
+### 5. 首頁搜尋邏輯（客戶端）
 
 `SkillExplorer` 元件在客戶端執行搜尋與分頁：
 
@@ -261,6 +273,7 @@ DRAFT → PENDING_AI_REVIEW → PENDING_HUMAN_REVIEW → PUBLISHED
 - **類型篩選**：全部 / Skill / Agent
 - **每頁筆數**：30 筆
 - 搜尋或切換類型時自動重置為第一頁
+- `fetchSkills()` 設定 `cache: 'no-store'`，首頁永遠取得即時資料
 
 ---
 
@@ -452,7 +465,7 @@ spring:
       connection-init-sql: "SET client_encoding TO 'UTF8'"
   jpa:
     hibernate:
-      ddl-auto: create-drop      # 開發用（每次重啟重建資料表）
+      ddl-auto: update           # 保留資料，僅自動 ALTER 新增欄位
     show-sql: false
     properties:
       hibernate:
@@ -471,7 +484,7 @@ app:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
 ```
 
-> **開發注意：** `ddl-auto: create-drop` 每次重啟都會重建資料表，DataSeeder 會重新 seed 資料。生產環境需改為 `validate` 並使用 Flyway 管理 Schema。
+> **開發注意：** `ddl-auto: update` 重啟後保留資料，Hibernate 自動 ALTER 新增欄位。DataSeeder 有 `count == 0` 保護，不會重複 seed。生產環境建議改為 `validate` 並使用 Flyway 管理 Schema。
 
 ### 前端 `.env.local`
 
@@ -519,4 +532,4 @@ A: 確認使用 `.\mvnw.cmd` 執行（非直接呼叫 `mvn`），它會自動設
 A: 確認 PostgreSQL 正在執行（`docker-compose up -d`）且後端已啟動（DataSeeder 會自動執行）。
 
 **Q: 前端上傳後看不到新資料？**
-A: `ddl-auto: create-drop` 每次重啟後端時會清空資料。在開發時手動重新整理首頁即可看到。
+A: 確認 Skill 狀態不是 `DRAFT` 或 `REJECTED`（首頁只顯示 PUBLISHED / PENDING_AI_REVIEW / PENDING_HUMAN_REVIEW）。若剛上傳 AI 審核尚未完成，稍等幾秒再重新整理。
