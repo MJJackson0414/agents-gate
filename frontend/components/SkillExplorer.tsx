@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Search, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { SkillResponse, SkillReviewResult, SkillDetailResponse, fetchSkillById } from '@/lib/api';
@@ -315,6 +316,15 @@ function SkillCard({ skill }: { skill: SkillResponse }) {
           </button>
         </div>
       )}
+
+      <div className="border-t border-gray-100 pt-3">
+        <Link
+          href={`/skills/${skill.id}`}
+          className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+        >
+          查看詳情 →
+        </Link>
+      </div>
     </div>
   );
 }

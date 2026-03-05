@@ -22,8 +22,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | CLI 適配檔案預覽 | ✅ P0 完成 | 前端產生（客戶端）|
 | 變數 & 附加檔案（上傳精靈） | ✅ P1 完成 | Step2 自動偵測 `{VAR}` / `$VAR`，附加腳本 |
 | AI 初審（LangChain4j） | ✅ P1 完成 | 非同步審核，Claude Sonnet 4.6，JSON 解析防護 |
-| 人工審核後台 | ⬜ P1 | 管理員 UI，審核 PENDING_HUMAN_REVIEW 清單 |
-| CLI 下載套件封裝 | ⬜ P1 | 後端 packaging service |
+| 人工審核後台 | ✅ P1 完成 | 管理員 UI，密碼驗證，PENDING_HUMAN_REVIEW / AI_REJECTED_REVIEW 清單 |
+| Skill/Agent 詳細頁 | ✅ P1 完成 | `/skills/[id]`，完整欄位展示，npm 安裝指令 + 複製 |
+| CLI 下載套件封裝 | ⬜ P2 | 後端 packaging service |
 | MongoDB 語義搜尋 | ⬜ P2 | Embedding + RAG |
 | 使用者認證（JWT） | ⬜ P2 | NextAuth + Spring Security |
 | 版本歷史 | ⬜ P2 | SemVer 管理 |
@@ -244,18 +245,19 @@ mcpSpec 為空 → hasMcpSpec = false → 全 CLI 相容 ✅
 
 ```
 DRAFT → PENDING_AI_REVIEW → PENDING_HUMAN_REVIEW → PUBLISHED
-                          → REJECTED（AI 不核准）
+                          → AI_REJECTED_REVIEW   → PUBLISHED
+                                                 → REJECTED（人工最終決定）
 ```
 
 - 上傳後立即觸發 `AiReviewService.reviewAsync()`（Spring `@Async`）
 - AI 審核由 `SkillReviewAiService`（LangChain4j interface）呼叫 Claude Sonnet 4.6
-- AI 核准 → `PENDING_HUMAN_REVIEW`；AI 拒絕 → `REJECTED`
+- AI 核准 → `PENDING_HUMAN_REVIEW`；AI 拒絕 → `AI_REJECTED_REVIEW`
 - 審核結果以 JSON 存入 `reviewFeedback` 欄位（`SkillReviewResult` 結構）
-- **下一步**：人工審核後台，管理員可將 `PENDING_HUMAN_REVIEW` → `PUBLISHED` 或 `REJECTED`
+- 人工審核後台：管理員可將 `PENDING_HUMAN_REVIEW` / `AI_REJECTED_REVIEW` → `PUBLISHED` 或 `REJECTED`
 
 ### 4. 首頁可見性規則
 
-`GET /api/v1/skills` 以 `findByStatusNotIn(DRAFT, REJECTED)` 過濾，只回傳：
+`GET /api/v1/skills` 以 `findByStatusNotIn(DRAFT, REJECTED, AI_REJECTED_REVIEW)` 過濾，只回傳：
 
 | 狀態 | 首頁顯示 | 說明 |
 |------|----------|------|
@@ -286,12 +288,23 @@ AgentsGate/
 │   │   ├── layout.tsx                     # 根 Layout
 │   │   ├── globals.css                    # 全域樣式
 │   │   ├── page.tsx                       # 首頁（Server Component，抓資料後傳給 SkillExplorer）
+│   │   ├── skills/
+│   │   │   └── [id]/
+│   │   │       └── page.tsx               # Skill/Agent 詳細頁（Server Component）
 │   │   ├── upload/
 │   │   │   ├── page.tsx                   # 類型選擇頁（TypeDecisionCard）
 │   │   │   └── [type]/
 │   │   │       └── page.tsx               # 精靈路由（?step=1~4）
+│   │   └── admin/
+│   │       └── reviews/
+│   │           └── page.tsx               # 人工審核後台（Client Component，密碼驗證）
 │   ├── components/
-│   │   ├── SkillExplorer.tsx              # 首頁：搜尋 / 篩選 / 分頁 / SkillCard
+│   │   ├── SkillExplorer.tsx              # 首頁：搜尋 / 篩選 / 分頁 / SkillCard（含查看詳情連結）
+│   │   ├── HomeHeader.tsx                 # 頁首：上傳按鈕 + 案件審查按鈕
+│   │   ├── AdminPasswordModal.tsx         # 管理員密碼驗證 Modal
+│   │   ├── skill-detail/
+│   │   │   ├── InstallCommand.tsx         # npm 安裝指令 + 複製按鈕（Client Component）
+│   │   │   └── CliCompatibility.tsx       # CLI 相容性 badge（Server Component）
 │   │   └── upload/
 │   │       ├── TypeDecisionCard.tsx       # Skill vs Agent 選擇卡
 │   │       ├── WizardLayout.tsx           # 步驟進度條
@@ -300,7 +313,8 @@ AgentsGate/
 │   │       ├── WizardStep3Environment.tsx # 步驟 3：環境宣告
 │   │       └── WizardStep4Preview.tsx     # 步驟 4：預覽 + 提交
 │   ├── lib/
-│   │   ├── api.ts                         # fetchSkills() / uploadSkill()
+│   │   ├── api.ts                         # fetchSkills() / uploadSkill() / fetchSkillById()
+│   │   ├── adminApi.ts                    # 管理員 API（verifyPassword / approve / reject）
 │   │   ├── cli-adapter.ts                 # 客戶端 CLI 適配檔案產生器
 │   │   └── upload-context.tsx             # useReducer 狀態 + localStorage 草稿
 │   ├── .env.local                         # 環境變數（本地）
@@ -312,7 +326,8 @@ AgentsGate/
 │   ├── src/main/java/com/agentsgate/
 │   │   ├── AgentsGateApplication.java     # Spring Boot 入口
 │   │   ├── api/
-│   │   │   └── SkillController.java       # GET + POST /api/v1/skills
+│   │   │   ├── SkillController.java       # GET /api/v1/skills, GET /api/v1/skills/{id}, POST /api/v1/skills
+│   │   │   └── AdminController.java       # POST /verify, GET /pending, POST /{id}/approve, POST /{id}/reject
 │   │   ├── domain/
 │   │   │   ├── Skill.java                 # JPA Entity（含巢狀 record）
 │   │   │   ├── SkillType.java             # Enum: SKILL, AGENT
@@ -320,12 +335,15 @@ AgentsGate/
 │   │   │   └── OsType.java                # Enum: WINDOWS, MACOS
 │   │   ├── dto/
 │   │   │   ├── SkillUploadRequest.java    # 上傳 DTO（含驗證）
-│   │   │   ├── SkillResponse.java         # 回應 DTO
+│   │   │   ├── SkillResponse.java         # 清單回應 DTO
+│   │   │   ├── SkillDetailResponse.java   # 詳細回應 DTO（所有欄位）
 │   │   │   └── ApiResponse.java           # 統一 Envelope
 │   │   ├── repository/
 │   │   │   └── SkillRepository.java       # JpaRepository<Skill, UUID>
 │   │   ├── service/
-│   │   │   └── SkillService.java          # uploadSkill() / listAll()
+│   │   │   ├── SkillService.java          # uploadSkill() / listAll() / findById()
+│   │   │   ├── AdminAuthService.java      # 密碼驗證 + Token 管理（8h TTL）
+│   │   │   └── AdminReviewService.java    # approve() / reject() 狀態流轉
 │   │   ├── ai/
 │   │   │   ├── AiReviewService.java       # @Async 審核協調器（觸發、狀態流轉、錯誤處理）
 │   │   │   ├── SkillReviewAiService.java  # LangChain4j interface（@SystemMessage / @UserMessage）
