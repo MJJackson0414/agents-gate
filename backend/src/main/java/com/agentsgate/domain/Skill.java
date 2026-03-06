@@ -98,6 +98,10 @@ public class Skill {
     @Column(columnDefinition = "TEXT")
     private String reviewFeedback;
 
+    // Source CLI format for archive uploads (null = generic/wizard upload)
+    @Column(name = "source_cli_format", length = 20)
+    private String sourceCliFormat;
+
     // Derived flag: true when mcpSpec is present → Gemini CLI not supported
     @Column(nullable = false)
     private boolean hasMcpSpec = false;
@@ -205,6 +209,9 @@ public class Skill {
 
     public String getReviewFeedback() { return reviewFeedback; }
     public void setReviewFeedback(String reviewFeedback) { this.reviewFeedback = reviewFeedback; }
+
+    public String getSourceCliFormat() { return sourceCliFormat; }
+    public void setSourceCliFormat(String sourceCliFormat) { this.sourceCliFormat = sourceCliFormat; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

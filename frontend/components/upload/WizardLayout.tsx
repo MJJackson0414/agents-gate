@@ -3,19 +3,18 @@
 import Link from 'next/link';
 import { clsx } from 'clsx';
 
-const STEPS = [
-  { n: 1, label: '基本資訊' },
-  { n: 2, label: '內容' },
-  { n: 3, label: '環境設定' },
-  { n: 4, label: '預覽與提交' },
-];
+const DEFAULT_STEP_LABELS = ['基本資訊', '內容', '環境設定', '預覽與提交'];
 
 interface WizardLayoutProps {
-  currentStep: 1 | 2 | 3 | 4;
+  currentStep: number;
   children: React.ReactNode;
+  stepLabels?: string[];
 }
 
-export default function WizardLayout({ currentStep, children }: WizardLayoutProps) {
+export default function WizardLayout({ currentStep, children, stepLabels }: WizardLayoutProps) {
+  const labels = stepLabels ?? DEFAULT_STEP_LABELS;
+  const steps = labels.map((label, i) => ({ n: i, label }));
+
   return (
     <div className="max-w-2xl mx-auto py-10 px-4">
       <Link
@@ -27,7 +26,7 @@ export default function WizardLayout({ currentStep, children }: WizardLayoutProp
 
       {/* 步驟指示器 */}
       <nav className="flex items-center justify-between mb-10">
-        {STEPS.map((step, idx) => (
+        {steps.map((step, idx) => (
           <div key={step.n} className="flex items-center flex-1">
             <div className="flex flex-col items-center">
               <div
@@ -40,7 +39,7 @@ export default function WizardLayout({ currentStep, children }: WizardLayoutProp
                     : 'border-gray-300 bg-white text-gray-400'
                 )}
               >
-                {currentStep > step.n ? '✓' : step.n}
+                {currentStep > step.n ? '✓' : step.n + 1}
               </div>
               <span
                 className={clsx(
@@ -51,7 +50,7 @@ export default function WizardLayout({ currentStep, children }: WizardLayoutProp
                 {step.label}
               </span>
             </div>
-            {idx < STEPS.length - 1 && (
+            {idx < steps.length - 1 && (
               <div
                 className={clsx(
                   'flex-1 h-0.5 mx-2',

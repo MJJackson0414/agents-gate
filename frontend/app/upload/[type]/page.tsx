@@ -34,13 +34,13 @@ export default function UploadWizardPage() {
   }
 
   const stepParam = searchParams.get('step');
-  const step = (Number(stepParam) as 1 | 2 | 3 | 4) || 1;
+  const step = Number(stepParam) || 1;
   const validStep = [1, 2, 3, 4].includes(step) ? step : 1;
 
   return (
     <UploadProvider>
       <TypeSync type={typeParam as ValidType} />
-      <WizardLayout currentStep={validStep as 1 | 2 | 3 | 4}>
+      <WizardLayout currentStep={validStep - 1}>
         {validStep === 1 && <WizardStep1Basic />}
         {validStep === 2 && <WizardStep2Content />}
         {validStep === 3 && <WizardStep3Environment />}

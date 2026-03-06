@@ -112,6 +112,8 @@ public class SkillService {
                     .toList());
         }
 
+        skill.setSourceCliFormat(request.sourceCliFormat());
+
         return skill;
     }
 }

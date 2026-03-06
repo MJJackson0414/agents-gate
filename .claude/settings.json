@@ -12,7 +12,17 @@
       "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd compile 2>&1 | Select-Object -Last 8 }\")",
       "Bash(echo \"Exit: $?\")",
       "Bash(\"d:/workspace/AgentsGate/_bmad-output/design-thinking-2026-03-05.md\":*)",
-      "Bash(\"d:/workspace/AgentsGate/README.md\":*)"
+      "Bash(\"d:/workspace/AgentsGate/README.md\":*)",
+      "Read(//c/Users/jacks/.agents/skills/skill-creator/**)",
+      "Read(//c/Users/jacks/.claude/skills/skill-creator/**)",
+      "Bash(npm install jszip)",
+      "Bash(docker exec agentsgate-postgres-1 psql -U agentsgate -d agentsgate -c \"ALTER TABLE skills DROP CONSTRAINT skills_status_check; ALTER TABLE skills ADD CONSTRAINT skills_status_check CHECK \\(status::text = ANY \\(ARRAY[''DRAFT'', ''PENDING_AI_REVIEW'', ''PENDING_HUMAN_REVIEW'', ''AI_REJECTED_REVIEW'', ''PUBLISHED'', ''REJECTED'']::text[]\\)\\);\")",
+      "Bash(docker ps --filter \"name=postgres\" --format \"{{.Names}}\")",
+      "Bash(docker exec agentsgate-postgres psql -U agentsgate -d agentsgate -c \"ALTER TABLE skills DROP CONSTRAINT skills_status_check; ALTER TABLE skills ADD CONSTRAINT skills_status_check CHECK \\(status::text = ANY \\(ARRAY[''DRAFT'', ''PENDING_AI_REVIEW'', ''PENDING_HUMAN_REVIEW'', ''AI_REJECTED_REVIEW'', ''PUBLISHED'', ''REJECTED'']::text[]\\)\\);\")",
+      "Bash(docker exec agentsgate-postgres psql -U agentsgate -d agentsgate -c \"SELECT pg_get_constraintdef\\(oid\\) FROM pg_constraint WHERE conname = ''skills_status_check'';\")",
+      "Bash(npm show unrar-js)",
+      "Bash(npm show node-unrar-js)",
+      "Bash(npm install node-unrar-js)"
     ],
     "additionalDirectories": [
       "C:\\Users\\jacks\\.claude\\projects\\d--workspace-AgentsGate",

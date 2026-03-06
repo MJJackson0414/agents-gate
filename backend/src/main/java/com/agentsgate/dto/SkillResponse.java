@@ -18,6 +18,7 @@ public record SkillResponse(
         List<String> tags,
         boolean hasMcpSpec,
         String reviewFeedback,
+        String sourceCliFormat,
         LocalDateTime createdAt
 ) {
     public static SkillResponse from(Skill skill) {
@@ -31,6 +32,7 @@ public record SkillResponse(
                 skill.getTags(),
                 skill.isHasMcpSpec(),
                 skill.getReviewFeedback(),
+                skill.getSourceCliFormat(),
                 skill.getCreatedAt()
         );
     }

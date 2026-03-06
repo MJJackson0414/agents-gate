@@ -79,12 +79,20 @@ export default function WizardStep3Environment() {
 
   function handleBack() {
     setStep(2);
-    router.push(`/upload/${params.type}?step=2`);
+    if (formData.archiveMode) {
+      router.push('/upload/archive?step=2');
+    } else {
+      router.push(`/upload/${params.type}?step=2`);
+    }
   }
 
   function handleNext() {
     setStep(4);
-    router.push(`/upload/${params.type}?step=4`);
+    if (formData.archiveMode) {
+      router.push('/upload/archive?step=4');
+    } else {
+      router.push(`/upload/${params.type}?step=4`);
+    }
   }
 
   return (
