@@ -30,6 +30,7 @@ export interface SkillResponse {
   tags: string[];
   hasMcpSpec: boolean;
   reviewFeedback: string | null;
+  sourceCliFormat: string | null;
   createdAt: string;
 }
 
@@ -67,6 +68,7 @@ export interface SkillDetailResponse {
   content: string;
   variables: { name: string; description: string; example: string }[] | null;
   attachedFiles: { filename: string; content: string }[] | null;
+  sourceCliFormat: string | null;
   createdAt: string;
 }
 

@@ -135,7 +135,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ id
 
         {/* CLI Compatibility */}
         <Section title="CLI 相容性">
-          <CliCompatibility hasMcpSpec={skill.hasMcpSpec} />
+          <CliCompatibility hasMcpSpec={skill.hasMcpSpec} sourceCliFormat={skill.sourceCliFormat} />
         </Section>
 
         {/* Tags + OS */}

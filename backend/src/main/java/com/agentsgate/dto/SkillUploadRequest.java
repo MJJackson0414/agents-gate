@@ -71,7 +71,10 @@ public record SkillUploadRequest(
 
         List<VariableDefinitionDto> variables,
 
-        List<AttachedFileDto> attachedFiles
+        List<AttachedFileDto> attachedFiles,
+
+        // Archive mode: which CLI this ZIP was built for (null = generic wizard upload)
+        String sourceCliFormat
 
 ) {
 

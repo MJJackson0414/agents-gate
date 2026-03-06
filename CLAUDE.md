@@ -26,6 +26,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Skill/Agent 詳細頁 | ✅ P1 完成 | `/skills/[id]`，完整欄位展示，npm 安裝指令 + 複製 |
 | 上傳同名自動帶入 | ✅ P1 完成 | Step1 名稱 onBlur 查詢 name+type，找到自動帶入所有欄位 |
 | 後端 Logging | ✅ P1 完成 | AdminController / AdminReviewService / AdminAuthService / SkillController SLF4J log |
+| ZIP/RAR 壓縮包上傳精靈 | ✅ P1.5 完成 | `/upload/archive` 5 步驟，瀏覽器解析 ZIP/RAR，檔案樹預覽 |
+| sourceCliFormat（CLI 專屬標記） | ✅ P1.5 完成 | 後端欄位 + CliCompatibility 顯示 + SkillCard badge |
 | CLI 下載套件封裝 | ⬜ P2 | 後端 packaging service |
 | MongoDB 語義搜尋 | ⬜ P2 | Embedding + RAG |
 | 使用者認證（JWT） | ⬜ P2 | NextAuth + Spring Security |
@@ -144,9 +146,10 @@ inclusion: always
 │                        前端 (Next.js)                         │
 │  ✅ 瀏覽 / 搜尋 / 篩選 Skills & Agents（首頁 SkillExplorer） │
 │  ✅ 上傳精靈（TypeDecisionCard + 4 步驟 Wizard）              │
+│  ✅ ZIP/RAR 壓縮包上傳精靈（/upload/archive，5 步驟）          │
 │  ✅ CLI 適配預覽（客戶端產生，Step 4）                         │
-│  ⬜ 下載套件（P1）                                             │
-│  ⬜ 審核管理後台（P1）                                         │
+│  ✅ 審核管理後台（/admin/reviews）                             │
+│  ⬜ 下載套件（P2）                                             │
 └────────────────────────┬─────────────────────────────────────┘
                          │ REST API
 ┌────────────────────────▼─────────────────────────────────────┐
@@ -154,9 +157,10 @@ inclusion: always
 │  ✅ GET  /api/v1/skills   — 列出所有 Skill/Agent              │
 │  ✅ POST /api/v1/skills   — 上傳 Skill/Agent                  │
 │  ✅ DataSeeder（啟動時 seed 54 個 BMAD 範例）                  │
-│  ⬜ CLI 適配 Service（P1）                                     │
-│  ⬜ AI 初審 Service（LangChain4j + Claude，P1）                │
-│  ⬜ 下載套件封裝 Service（P1）                                 │
+│  ✅ AI 初審 Service（LangChain4j + Claude Sonnet 4.6）         │
+│  ✅ 人工審核 API（approve/reject/delete）                      │
+│  ✅ sourceCliFormat 欄位（CLI 專屬標記）                       │
+│  ⬜ 下載套件封裝 Service（P2）                                 │
 │  ⬜ 搜尋 Service（P2）                                         │
 └───────────┬─────────────────────────────┬────────────────────┘
             │                             │
@@ -239,9 +243,21 @@ inclusion: always
 ```
 mcpSpec 有值 → hasMcpSpec = true → Gemini CLI: ❌ 不支援
 mcpSpec 為空 → hasMcpSpec = false → 全 CLI 相容 ✅
+sourceCliFormat 有值 → 僅該 CLI ✅，其他全部 ❌（Archive 上傳模式）
 ```
 
-前端 `cli-adapter.ts` 在 Step 4 預覽時自動套用此規則。
+前端 `cli-adapter.ts` 在 Step 4 預覽時自動套用此規則。`CliCompatibility.tsx` 接收 `sourceCliFormat` prop 處理 CLI 專屬顯示。`SkillCard` 當 `sourceCliFormat` 有值時顯示橘色「XX 專屬」badge。
+
+### 2-B. ZIP/RAR 壓縮包上傳（Archive Mode）
+
+- 入口：`/upload/archive?step=0~4`，共 5 步驟
+- Step 0 解析：瀏覽器內使用 `jszip`（ZIP）/ `node-unrar-js`（RAR）解析，不需後端
+- 解析後自動填入 name/description/version/tags（來自 frontmatter）
+- `archiveFiles` 存入 upload-context，**不存 localStorage**（內容太大）
+- 提交 payload：`content`=入口檔 body，`attachedFiles`=其餘所有檔案（保留完整路徑），`sourceCliFormat`
+- `node-unrar-js` 必須從 `'node-unrar-js/esm/index.esm.js'` 匯入（非 `'node-unrar-js/esm'`），避免引入使用 Node.js `fs` 的 `ExtractorFile`
+- `unrar.wasm` 複製至 `frontend/public/unrar.wasm`，執行時以 `fetch('/unrar.wasm')` 載入
+- `next.config.ts` turbopack 別名：`fs`/`path` → `browser-stub.js`（空模組）
 
 ### 3. 審核狀態流轉
 
@@ -295,6 +311,8 @@ AgentsGate/
 │   │   │       └── page.tsx               # Skill/Agent 詳細頁（Server Component）
 │   │   ├── upload/
 │   │   │   ├── page.tsx                   # 類型選擇頁（TypeDecisionCard）
+│   │   │   ├── archive/
+│   │   │   │   └── page.tsx               # ZIP/RAR 上傳精靈（?step=0~4，Suspense 包裝）
 │   │   │   └── [type]/
 │   │   │       └── page.tsx               # 精靈路由（?step=1~4）
 │   │   └── admin/
@@ -308,17 +326,24 @@ AgentsGate/
 │   │   │   ├── InstallCommand.tsx         # npm 安裝指令 + 複製按鈕（Client Component）
 │   │   │   └── CliCompatibility.tsx       # CLI 相容性 badge（Server Component）
 │   │   └── upload/
-│   │       ├── TypeDecisionCard.tsx       # Skill vs Agent 選擇卡
-│   │       ├── WizardLayout.tsx           # 步驟進度條
-│   │       ├── WizardStep1Basic.tsx       # 步驟 1：基本資訊
+│   │       ├── TypeDecisionCard.tsx       # Skill vs Agent + ZIP/RAR 選擇卡
+│   │       ├── WizardLayout.tsx           # 步驟進度條（0-based，stepLabels prop）
+│   │       ├── WizardStep1Basic.tsx       # 步驟 1：基本資訊（archive mode 路由 step=2）
 │   │       ├── WizardStep2Content.tsx     # 步驟 2：內容 + 安裝步驟
-│   │       ├── WizardStep3Environment.tsx # 步驟 3：環境宣告
-│   │       └── WizardStep4Preview.tsx     # 步驟 4：預覽 + 提交
+│   │       ├── WizardStep3Environment.tsx # 步驟 3：環境宣告（archive mode 路由 step=4）
+│   │       ├── WizardStep4Preview.tsx     # 步驟 4：預覽 + 提交
+│   │       └── archive/
+│   │           ├── ArchiveStep0Upload.tsx  # CLI 選擇 + ZIP/RAR 上傳 + 解析預覽
+│   │           ├── ArchiveStep2FileTree.tsx # 檔案樹瀏覽 + 點擊預覽 + 變數偵測 + 安裝步驟
+│   │           ├── ArchiveStep4Preview.tsx  # CLI 相容性 + 檔案摘要 + 提交
+│   │           └── FileTreeViewer.tsx       # 可重用樹狀元件（buildFileTree，入口檔標記）
 │   ├── lib/
-│   │   ├── api.ts                         # fetchSkills() / uploadSkill() / fetchSkillById() / fetchSkillByNameAndType()
+│   │   ├── api.ts                         # fetchSkills() / uploadSkill() / fetchSkillById() / fetchSkillByNameAndType()；SkillResponse/SkillDetailResponse 含 sourceCliFormat
 │   │   ├── adminApi.ts                    # 管理員 API（verifyPassword / approve / reject / fetchPublishedSkills / deleteSkill）
 │   │   ├── cli-adapter.ts                 # 客戶端 CLI 適配檔案產生器
-│   │   └── upload-context.tsx             # useReducer 狀態 + localStorage 草稿
+│   │   ├── zip-parser.ts                  # ZIP/RAR 瀏覽器解析；parseArchive 統一入口；import from node-unrar-js/esm/index.esm.js
+│   │   ├── browser-stub.js                # 空模組，供 next.config turbopack 別名 fs/path 使用
+│   │   └── upload-context.tsx             # useReducer 狀態 + localStorage 草稿；archiveMode/sourceCliFormat/archiveFiles
 │   ├── .env.local                         # 環境變數（本地）
 │   ├── next.config.ts
 │   ├── tailwind.config.ts

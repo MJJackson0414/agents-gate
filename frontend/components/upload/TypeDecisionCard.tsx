@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Wrench, Bot, ChevronDown, ChevronUp, Lightbulb, ArrowLeft } from 'lucide-react';
+import { Wrench, Bot, ChevronDown, ChevronUp, Lightbulb, ArrowLeft, FolderArchive } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useUpload, SkillType } from '@/lib/upload-context';
 
@@ -88,7 +88,7 @@ export default function TypeDecisionCard() {
       </p>
 
       {/* 類型卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <TypeCard
           type="skill"
           icon={<Wrench size={32} className="text-blue-600" />}
@@ -108,6 +108,30 @@ export default function TypeDecisionCard() {
           onSelect={() => handleSelect('agent')}
         />
       </div>
+
+      {/* ZIP 壓縮包上傳 */}
+      <button
+        onClick={() => router.push('/upload/archive?step=0')}
+        className="w-full border-2 border-dashed border-gray-300 hover:border-orange-400 rounded-xl p-5 mb-8 transition-all hover:shadow-md bg-white group text-left"
+      >
+        <div className="flex items-center gap-4">
+          <div className="shrink-0 w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center">
+            <FolderArchive size={24} className="text-orange-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-base font-semibold text-gray-900">ZIP 壓縮包上傳</span>
+              <span className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded-full font-medium">進階</span>
+            </div>
+            <p className="text-sm text-gray-500">
+              已有完整的 Skill 資料夾（含子目錄）？直接上傳 ZIP 或 RAR，自動解析目錄結構與 metadata。
+            </p>
+          </div>
+          <span className="text-sm font-medium text-orange-500 group-hover:underline shrink-0">
+            選擇 →
+          </span>
+        </div>
+      </button>
 
       {/* AI 建議提示 */}
       {aiSuggestion && (
@@ -132,7 +156,7 @@ export default function TypeDecisionCard() {
           已有 SKILL.md 或 agent 檔案？貼上後自動偵測類型：
         </p>
         <textarea
-          className="w-full h-24 px-3 py-2 text-sm font-mono border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50"
+          className="w-full h-24 px-3 py-2 text-sm font-mono text-gray-900 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50"
           placeholder="將您的 SKILL.md 內容貼在此處..."
           value={pasteValue}
           onChange={(e) => setPasteValue(e.target.value)}
@@ -163,7 +187,7 @@ export default function TypeDecisionCard() {
               <tbody>
                 {COMPARISON_ROWS.map((row) => (
                   <tr key={row.label} className="border-b border-gray-50 last:border-0">
-                    <td className="py-2 text-gray-500 font-medium pr-4">{row.label}</td>
+                    <td className="py-2 text-gray-700 font-medium pr-4">{row.label}</td>
                     <td className="py-2 text-gray-700 pr-4">{row.skill}</td>
                     <td className="py-2 text-gray-700">{row.agent}</td>
                   </tr>

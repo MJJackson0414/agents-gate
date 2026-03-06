@@ -124,6 +124,7 @@ public class AiReviewService {
         log.info("[AiReview]  11. Install Steps:\n{}", stepsText);
         log.info("[AiReview]  12. Variables ({}):\n{}", vars != null ? vars.size() : 0, variablesText);
         log.info("[AiReview]  13. Attached Files ({}):\n{}", files != null ? files.size() : 0, attachedFilesText);
+        log.info("[AiReview]  14. Source CLI  : {}", skill.getSourceCliFormat() != null ? skill.getSourceCliFormat() : "GENERIC");
         log.info("[AiReview] >>> =====================================");
 
         String rawJson = aiService.review(

@@ -43,8 +43,12 @@ export default function WizardStep1Basic() {
           installationSteps: found.installationSteps,
           dependencies: found.dependencies,
           osCompatibility: found.osCompatibility as ('WINDOWS' | 'MACOS')[],
-          environmentDeclaration: found.environmentDeclaration ?? undefined,
-          mcpSpec: found.mcpSpec ?? null,
+          environmentDeclaration: found.environmentDeclaration
+            ? { ...found.environmentDeclaration, additionalNotes: found.environmentDeclaration.additionalNotes ?? '' }
+            : undefined,
+          mcpSpec: found.mcpSpec
+            ? { ...found.mcpSpec, args: found.mcpSpec.args ?? [], env: found.mcpSpec.env ?? {} }
+            : null,
           cliOverrides: found.cliOverrides ?? {},
           variables: found.variables ?? [],
           attachedFiles: found.attachedFiles ?? [],
@@ -79,7 +83,11 @@ export default function WizardStep1Basic() {
   function handleNext() {
     if (!validate()) return;
     setStep(2);
-    router.push(`/upload/${params.type}?step=2`);
+    if (formData.archiveMode) {
+      router.push('/upload/archive?step=2');
+    } else {
+      router.push(`/upload/${params.type}?step=2`);
+    }
   }
 
   function addTag(tag: string) {

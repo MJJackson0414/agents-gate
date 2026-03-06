@@ -9,6 +9,13 @@ import { SkillResponse, SkillReviewResult, SkillDetailResponse, fetchSkillById }
 
 const UPLOAD_DRAFT_KEY = 'agentsgate-upload-draft';
 
+const CLI_FORMAT_LABEL: Record<string, string> = {
+  CLAUDE:  'Claude Code',
+  COPILOT: 'GitHub Copilot',
+  GEMINI:  'Gemini CLI',
+  KIRO:    'Kiro',
+};
+
 function parseReviewFeedback(raw: string | null): SkillReviewResult | null {
   if (!raw) return null;
   try { return JSON.parse(raw) as SkillReviewResult; } catch { return null; }
@@ -111,7 +118,7 @@ export default function SkillExplorer({ initialSkills }: { initialSkills: SkillR
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="搜尋名稱、描述或標籤..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+            className="w-full pl-9 pr-4 py-2 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
           />
         </div>
         <div className="flex gap-2 shrink-0">
@@ -257,15 +264,26 @@ function SkillCard({ skill }: { skill: SkillResponse }) {
       )}
 
       <div className="flex items-center gap-2 pt-1 border-t border-gray-100 flex-wrap">
-        <span className="text-xs text-gray-400">CLI：</span>
-        {['Claude Code', 'Copilot', 'Gemini', 'Kiro'].map((cli) => {
-          const blocked = skill.hasMcpSpec && (cli === 'Gemini' || cli === 'Kiro');
-          return (
-            <span key={cli} className={clsx('text-xs', blocked ? 'text-red-400 line-through' : 'text-green-600')}>
-              {blocked ? '✗' : '✓'} {cli}
+        {skill.sourceCliFormat ? (
+          <>
+            <span className="text-xs text-gray-400">CLI：</span>
+            <span className="text-xs px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded font-medium border border-orange-200">
+              {CLI_FORMAT_LABEL[skill.sourceCliFormat] ?? skill.sourceCliFormat} 專屬
             </span>
-          );
-        })}
+          </>
+        ) : (
+          <>
+            <span className="text-xs text-gray-400">CLI：</span>
+            {['Claude Code', 'Copilot', 'Gemini', 'Kiro'].map((cli) => {
+              const blocked = skill.hasMcpSpec && (cli === 'Gemini' || cli === 'Kiro');
+              return (
+                <span key={cli} className={clsx('text-xs', blocked ? 'text-red-400 line-through' : 'text-green-600')}>
+                  {blocked ? '✗' : '✓'} {cli}
+                </span>
+              );
+            })}
+          </>
+        )}
       </div>
 
       {/* Rejection detail section */}

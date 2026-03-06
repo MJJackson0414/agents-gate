@@ -36,6 +36,7 @@ public record SkillDetailResponse(
         String content,
         List<Skill.VariableDefinition> variables,
         List<Skill.AttachedFile> attachedFiles,
+        String sourceCliFormat,
         LocalDateTime createdAt
 ) {
     public static SkillDetailResponse from(Skill skill) {
@@ -61,6 +62,7 @@ public record SkillDetailResponse(
                 skill.getContent(),
                 skill.getVariables(),
                 skill.getAttachedFiles(),
+                skill.getSourceCliFormat(),
                 skill.getCreatedAt()
         );
     }

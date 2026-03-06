@@ -1,9 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import type { CliFormat, ParsedArchiveFile } from './zip-parser';
 
 export type SkillType = 'skill' | 'agent';
 export type OsType = 'WINDOWS' | 'MACOS';
+export type { CliFormat };
 
 export interface EnvironmentDeclaration {
   requiresInternet: boolean;
@@ -43,6 +45,10 @@ export interface UploadFormData {
   variables: { name: string; description: string; example: string }[];
   // 附加檔案（補充腳本）
   attachedFiles: { filename: string; content: string }[];
+  // Archive mode fields
+  archiveMode: boolean;
+  sourceCliFormat: CliFormat | null;
+  archiveFiles: ParsedArchiveFile[];
 }
 
 export interface UploadState {
@@ -61,6 +67,7 @@ type UploadAction =
   | { type: 'SET_ERRORS'; payload: Record<string, string> }
   | { type: 'CLEAR_ERROR'; payload: string }
   | { type: 'SET_SUBMITTING'; payload: boolean }
+  | { type: 'SET_ARCHIVE_MODE'; payload: { cli: CliFormat; files: ParsedArchiveFile[] } }
   | { type: 'RESET' };
 
 const INITIAL_ENV: EnvironmentDeclaration = {
@@ -86,6 +93,9 @@ const INITIAL_STATE: UploadState = {
     changelog: '初始版本。',
     variables: [],
     attachedFiles: [],
+    archiveMode: false,
+    sourceCliFormat: null,
+    archiveFiles: [],
   },
   errors: {},
   isDirty: false,
@@ -112,6 +122,17 @@ function uploadReducer(state: UploadState, action: UploadAction): UploadState {
     }
     case 'SET_SUBMITTING':
       return { ...state, isSubmitting: action.payload };
+    case 'SET_ARCHIVE_MODE':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          archiveMode: true,
+          sourceCliFormat: action.payload.cli,
+          archiveFiles: action.payload.files,
+        },
+        isDirty: true,
+      };
     case 'RESET':
       return INITIAL_STATE;
     default:
@@ -129,6 +150,7 @@ interface UploadContextValue {
   setErrors: (errors: Record<string, string>) => void;
   clearError: (field: string) => void;
   setSubmitting: (value: boolean) => void;
+  setArchiveMode: (cli: CliFormat, files: ParsedArchiveFile[]) => void;
   reset: () => void;
 }
 
@@ -152,9 +174,11 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (state.isDirty) {
       try {
+        // Exclude archiveFiles from localStorage (too large; re-parsed on each session)
+        const { archiveFiles: _, ...persistableFormData } = state.formData as UploadFormData & { archiveFiles: unknown };
         localStorage.setItem(
           DRAFT_KEY,
-          JSON.stringify({ type: state.type, step: state.step, formData: state.formData })
+          JSON.stringify({ type: state.type, step: state.step, formData: persistableFormData })
         );
       } catch {
         // ignore storage errors
@@ -170,6 +194,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     setErrors: (errors) => dispatch({ type: 'SET_ERRORS', payload: errors }),
     clearError: (field) => dispatch({ type: 'CLEAR_ERROR', payload: field }),
     setSubmitting: (value) => dispatch({ type: 'SET_SUBMITTING', payload: value }),
+    setArchiveMode: (cli, files) => dispatch({ type: 'SET_ARCHIVE_MODE', payload: { cli, files } }),
     reset: () => {
       localStorage.removeItem(DRAFT_KEY);
       dispatch({ type: 'RESET' });
