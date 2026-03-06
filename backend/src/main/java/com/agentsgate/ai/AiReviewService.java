@@ -6,6 +6,7 @@ import com.agentsgate.repository.SkillRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,9 @@ import java.util.UUID;
 public class AiReviewService {
 
     private static final Logger log = LoggerFactory.getLogger(AiReviewService.class);
+
+    @Value("${app.ai-review.enabled:true}")
+    private boolean aiReviewEnabled;
 
     private final SkillRepository skillRepository;
     private final SkillReviewAiService aiService;
@@ -49,6 +53,18 @@ public class AiReviewService {
 
         log.info("[AiReview] Skill loaded: name='{}', type={}, version={}, tags={}",
                 skill.getName(), skill.getType(), skill.getVersion(), skill.getTags());
+
+        // Dev mode: bypass AI review
+        if (!aiReviewEnabled) {
+            log.warn("[AiReview] ========================================================");
+            log.warn("[AiReview] !!! AI REVIEW IS DISABLED (app.ai-review.enabled=false) !!!");
+            log.warn("[AiReview] !!! Skill '{}' auto-approved. DO NOT use in production. !!!", skill.getName());
+            log.warn("[AiReview] ========================================================");
+            skill.setStatus(SkillStatus.PENDING_HUMAN_REVIEW);
+            skill.setReviewFeedback(buildBypassFeedback());
+            skillRepository.save(skill);
+            return;
+        }
 
         // Mark as in-review
         skill.setStatus(SkillStatus.PENDING_AI_REVIEW);
@@ -208,6 +224,14 @@ public class AiReviewService {
         int start = text.indexOf('{');
         int end = text.lastIndexOf('}');
         return (start >= 0 && end > start) ? text.substring(start, end + 1) : text;
+    }
+
+    private String buildBypassFeedback() {
+        return "{\"approved\":true," +
+                "\"summary\":\"[DEV MODE] AI review bypassed\"," +
+                "\"userExplanation\":\"【開發模式】AI 審核已停用，本次提交自動核准。此設定僅供開發測試使用，請勿於正式環境啟用。\"," +
+                "\"issues\":[]," +
+                "\"suggestions\":[\"記得在正式環境啟用 app.ai-review.enabled=true\"]}";
     }
 
     private String buildErrorFeedback(String errorMessage) {
