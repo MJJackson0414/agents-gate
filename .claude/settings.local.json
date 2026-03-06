@@ -32,7 +32,8 @@
       "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { $p = Get-Process -Id $_OwningProcess -ErrorAction SilentlyContinue; [PSCustomObject]@{PID=$_OwningProcess; Name=$p.Name; Port=8080} }\")",
       "Bash(netstat -ano)",
       "Bash(powershell -Command \"netstat -ano | Select-String '':8080''\")",
-      "Bash(powershell -Command \"Get-Process -Id 13928 2>&1 | Select-Object Id, Name, MainWindowTitle, Path\")"
+      "Bash(powershell -Command \"Get-Process -Id 13928 2>&1 | Select-Object Id, Name, MainWindowTitle, Path\")",
+      "Bash(npm install jszip node-unrar-js)"
     ]
   }
 }
