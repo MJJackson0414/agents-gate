@@ -1,0 +1,20 @@
+{
+    "name": "your-unique-skill-lookup",
+    "version": "1.0.0",
+    "description": "Installer for skill-lookup AI skill",
+    "bin": {
+        "install-skill-lookup": "./bin/index.js"
+    },
+    "keywords": [
+        "ai",
+        "skill",
+        "claude"
+    ],
+    "author": "",
+    "license": "MIT",
+    "files": [
+        "bin/index.js",
+        "SKILL.md",
+        "config.json"
+    ]
+}

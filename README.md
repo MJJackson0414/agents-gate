@@ -181,6 +181,12 @@ docker logs agentsgate-postgres
 
 ---
 
+## CLI 套件封裝範本
+
+專案內的 `cli-template/` 目錄提供了一個完整的「CLI 下載套件封裝」範本。開發者可藉此將 Skill / Agent 封裝成 Node.js 套件，發布到 npm，讓使用者能透過 `npx` 以互動式介面，自動將檔案安裝至目標 AI 目錄（如 `.claude/skills` 或 `.gemini/skills`），並支援動態參數設定。詳細操作請參閱 [cli-template/README.md](./cli-template/README.md)。
+
+---
+
 ## 目前實作進度
 
 | 功能 | 狀態 |
@@ -191,7 +197,7 @@ docker logs agentsgate-postgres
 | AI 自動審核（Claude Sonnet 4.6） | ✅ 完成 |
 | 人工審核後台 | ✅ 完成 |
 | Skill/Agent 詳細頁 | ✅ 完成 |
-| CLI 下載套件封裝 | ⬜ 規劃中 |
+| CLI 下載套件封裝 | ✅ 完成 |
 | 使用者認證（JWT） | ⬜ 規劃中 |
 | 語義搜尋（MongoDB RAG） | ⬜ 規劃中 |
 
