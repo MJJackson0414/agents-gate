@@ -2,22 +2,25 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, ChevronUp, ArrowLeft, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowLeft, RefreshCw, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import {
   AdminReviewItem,
   getAdminToken,
   clearAdminToken,
   fetchPendingReviews,
+  fetchPublishedSkills,
   approveReview,
   rejectReview,
+  deleteSkill,
 } from '@/lib/adminApi';
 
-type FilterTab = 'ALL' | 'AI_PASSED' | 'AI_REJECTED';
+type FilterTab = 'ALL' | 'AI_PASSED' | 'AI_REJECTED' | 'PUBLISHED';
 
 export default function AdminReviewsPage() {
   const router = useRouter();
   const [items, setItems] = useState<AdminReviewItem[]>([]);
+  const [publishedItems, setPublishedItems] = useState<AdminReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -26,10 +29,12 @@ export default function AdminReviewsPage() {
   const loadReviews = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchPendingReviews();
-      if (res.success && res.data) {
-        setItems(res.data);
-      }
+      const [reviewRes, publishedRes] = await Promise.all([
+        fetchPendingReviews(),
+        fetchPublishedSkills(),
+      ]);
+      if (reviewRes.success && reviewRes.data) setItems(reviewRes.data);
+      if (publishedRes.success && publishedRes.data) setPublishedItems(publishedRes.data);
     } catch {
       // network error; 401 is handled inside adminFetch (auto-redirect)
     } finally {
@@ -79,6 +84,23 @@ export default function AdminReviewsPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('確定要刪除此項目？此操作無法復原。')) return;
+    setActionLoading(id);
+    try {
+      const res = await deleteSkill(id);
+      if (res.success) {
+        setPublishedItems(prev => prev.filter(item => item.id !== id));
+      } else {
+        alert(res.error ?? '刪除失敗');
+      }
+    } catch {
+      alert('連線失敗');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleLogout = () => {
     clearAdminToken();
     router.replace('/');
@@ -97,6 +119,7 @@ export default function AdminReviewsPage() {
     { key: 'ALL', label: `全部 (${items.length})` },
     { key: 'AI_PASSED', label: `AI 通過待審 (${aiPassedCount})` },
     { key: 'AI_REJECTED', label: `AI 拒絕待複審 (${aiRejectedCount})` },
+    { key: 'PUBLISHED', label: `已通過 (${publishedItems.length})` },
   ];
 
   return (
@@ -158,11 +181,15 @@ export default function AdminReviewsPage() {
           <div className="text-center py-20 text-gray-400 text-sm">載入中...</div>
         )}
 
-        {!loading && filteredItems.length === 0 && (
+        {!loading && activeTab !== 'PUBLISHED' && filteredItems.length === 0 && (
           <div className="text-center py-20 text-gray-400 text-sm">目前沒有待審核的項目</div>
         )}
 
-        {!loading && (
+        {!loading && activeTab === 'PUBLISHED' && publishedItems.length === 0 && (
+          <div className="text-center py-20 text-gray-400 text-sm">目前沒有已發布的項目</div>
+        )}
+
+        {!loading && activeTab !== 'PUBLISHED' && (
           <div className="space-y-4">
             {filteredItems.map(item => (
               <ReviewCard
@@ -177,7 +204,75 @@ export default function AdminReviewsPage() {
             ))}
           </div>
         )}
+
+        {!loading && activeTab === 'PUBLISHED' && (
+          <div className="space-y-4">
+            {publishedItems.map(item => (
+              <PublishedCard
+                key={item.id}
+                item={item}
+                onDelete={() => handleDelete(item.id)}
+                actionLoading={actionLoading === item.id}
+              />
+            ))}
+          </div>
+        )}
       </main>
+    </div>
+  );
+}
+
+// --- PublishedCard ---
+
+interface PublishedCardProps {
+  item: AdminReviewItem;
+  onDelete: () => void;
+  actionLoading: boolean;
+}
+
+function PublishedCard({ item, onDelete, actionLoading }: PublishedCardProps) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h3 className="font-semibold text-gray-900">{item.name}</h3>
+            <span className={clsx(
+              'px-2 py-0.5 rounded text-xs font-medium',
+              item.type === 'SKILL' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
+            )}>
+              {item.type}
+            </span>
+            <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700">
+              已發布
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
+          <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+            <span>{item.authorName}</span>
+            <span>{item.authorEmail}</span>
+            <span>v{item.version}</span>
+            <span>{new Date(item.createdAt).toLocaleDateString('zh-TW')}</span>
+          </div>
+          {item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {item.tags.map(tag => (
+                <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={onDelete}
+          disabled={actionLoading}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          <Trash2 size={14} />
+          刪除
+        </button>
+      </div>
     </div>
   );
 }

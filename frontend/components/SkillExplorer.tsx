@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Search, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { SkillResponse, SkillReviewResult, SkillDetailResponse, fetchSkillById } from '@/lib/api';
@@ -58,6 +59,7 @@ const STATUS_LABEL: Record<string, string> = {
   DRAFT: '草稿',
   PENDING_AI_REVIEW: 'AI 審核中',
   PENDING_HUMAN_REVIEW: '人工審核中',
+  AI_REJECTED_REVIEW: 'AI 建議退回',
   REJECTED: '已退回',
 };
 
@@ -191,7 +193,7 @@ export default function SkillExplorer({ initialSkills }: { initialSkills: SkillR
 function SkillCard({ skill }: { skill: SkillResponse }) {
   const router = useRouter();
   const isAgent = skill.type === 'AGENT';
-  const isRejected = skill.status === 'REJECTED';
+  const isRejected = skill.status === 'REJECTED' || skill.status === 'AI_REJECTED_REVIEW';
   const [showDetail, setShowDetail] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const feedback = parseReviewFeedback(skill.reviewFeedback ?? null);
@@ -231,7 +233,9 @@ function SkillCard({ skill }: { skill: SkillResponse }) {
         <span className={clsx(
           'shrink-0 text-xs px-2 py-0.5 rounded-full font-medium',
           skill.status === 'PUBLISHED' ? 'bg-green-50 text-green-700' :
-          isRejected ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500'
+          skill.status === 'REJECTED' ? 'bg-red-50 text-red-600' :
+          skill.status === 'AI_REJECTED_REVIEW' ? 'bg-orange-50 text-orange-600' :
+          'bg-gray-100 text-gray-500'
         )}>
           {STATUS_LABEL[skill.status] ?? skill.status}
         </span>
@@ -315,6 +319,15 @@ function SkillCard({ skill }: { skill: SkillResponse }) {
           </button>
         </div>
       )}
+
+      <div className="border-t border-gray-100 pt-3">
+        <Link
+          href={`/skills/${skill.id}`}
+          className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+        >
+          查看詳情 →
+        </Link>
+      </div>
     </div>
   );
 }

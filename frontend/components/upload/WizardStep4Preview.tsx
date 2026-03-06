@@ -8,13 +8,14 @@ import { uploadSkill, fetchSkillById, SkillDetailResponse, SkillReviewResult } f
 import { clsx } from 'clsx';
 import { Copy, Check } from 'lucide-react';
 
-const TERMINAL_STATUSES = ['PENDING_HUMAN_REVIEW', 'PUBLISHED', 'REJECTED'];
+const TERMINAL_STATUSES = ['PENDING_HUMAN_REVIEW', 'PUBLISHED', 'REJECTED', 'AI_REJECTED_REVIEW'];
 const STATUS_LABEL: Record<string, { label: string; color: string; icon: string }> = {
-  DRAFT:                { label: '草稿',       color: 'text-gray-500',  icon: '⏳' },
-  PENDING_AI_REVIEW:    { label: 'AI 審核中',  color: 'text-blue-600',  icon: '🤖' },
-  PENDING_HUMAN_REVIEW: { label: '等待人工審核', color: 'text-yellow-600', icon: '👀' },
-  PUBLISHED:            { label: '已發布',     color: 'text-green-600', icon: '✅' },
-  REJECTED:             { label: '已退回',     color: 'text-red-600',   icon: '❌' },
+  DRAFT:                { label: '草稿',         color: 'text-gray-500',   icon: '⏳' },
+  PENDING_AI_REVIEW:    { label: 'AI 審核中',    color: 'text-blue-600',   icon: '🤖' },
+  PENDING_HUMAN_REVIEW: { label: '等待人工審核',  color: 'text-yellow-600', icon: '👀' },
+  AI_REJECTED_REVIEW:   { label: 'AI 建議退回',  color: 'text-orange-600', icon: '⚠️' },
+  PUBLISHED:            { label: '已發布',       color: 'text-green-600',  icon: '✅' },
+  REJECTED:             { label: '已退回',       color: 'text-red-600',    icon: '❌' },
 };
 
 function parseFeedback(raw: string | null): SkillReviewResult | null {
@@ -216,7 +217,7 @@ export default function WizardStep4Preview() {
         </div>
         {reviewStatus && (
           <div className="text-center space-y-2">
-            {reviewStatus === 'REJECTED' ? (
+            {(reviewStatus === 'REJECTED' || reviewStatus === 'AI_REJECTED_REVIEW') ? (
               <button
                 onClick={() => router.push(`/upload/${type}?step=1`)}
                 className="px-6 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600"

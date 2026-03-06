@@ -10,11 +10,15 @@
       "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd dependency:resolve 2>&1 | Select-Object -Last 15 }\")",
       "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd compile 2>&1 | Select-Object -Last 15 }\")",
       "Bash(powershell.exe -Command \"& { cd ''D:\\\\workspace\\\\AgentsGate\\\\backend''; .\\\\mvnw.cmd compile 2>&1 | Select-Object -Last 8 }\")",
-      "Bash(echo \"Exit: $?\")"
+      "Bash(echo \"Exit: $?\")",
+      "Bash(\"d:/workspace/AgentsGate/_bmad-output/design-thinking-2026-03-05.md\":*)",
+      "Bash(\"d:/workspace/AgentsGate/README.md\":*)"
     ],
     "additionalDirectories": [
       "C:\\Users\\jacks\\.claude\\projects\\d--workspace-AgentsGate",
-      "C:\\Users\\jacks\\.claude\\projects\\d--workspace-AgentsGate\\memory"
+      "C:\\Users\\jacks\\.claude\\projects\\d--workspace-AgentsGate\\memory",
+      "d:\\workspace\\AgentsGate\\_bmad-output",
+      "d:\\workspace\\AgentsGate\\frontend\\app\\skills"
     ]
   }
 }

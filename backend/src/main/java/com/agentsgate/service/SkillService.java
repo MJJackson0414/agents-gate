@@ -3,6 +3,7 @@ package com.agentsgate.service;
 import com.agentsgate.ai.AiReviewService;
 import com.agentsgate.domain.Skill;
 import com.agentsgate.domain.SkillStatus;
+import com.agentsgate.domain.SkillType;
 import com.agentsgate.dto.SkillDetailResponse;
 import com.agentsgate.dto.SkillResponse;
 import com.agentsgate.dto.SkillUploadRequest;
@@ -44,7 +45,7 @@ public class SkillService {
 
     @Transactional(readOnly = true)
     public List<SkillResponse> listAll() {
-        return skillRepository.findByStatusNotIn(List.of(SkillStatus.DRAFT, SkillStatus.REJECTED, SkillStatus.AI_REJECTED_REVIEW))
+        return skillRepository.findByStatusNotIn(List.of(SkillStatus.DRAFT, SkillStatus.REJECTED))
                 .stream()
                 .map(SkillResponse::from)
                 .toList();
@@ -53,6 +54,12 @@ public class SkillService {
     @Transactional(readOnly = true)
     public Optional<SkillDetailResponse> findById(UUID id) {
         return skillRepository.findById(id).map(SkillDetailResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SkillDetailResponse> lookupByNameAndType(String name, SkillType type) {
+        return skillRepository.findFirstByNameAndTypeOrderByCreatedAtDesc(name, type)
+                .map(SkillDetailResponse::from);
     }
 
     private Skill mapRequestToEntity(SkillUploadRequest request) {

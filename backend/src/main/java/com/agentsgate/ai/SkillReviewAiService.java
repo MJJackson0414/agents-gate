@@ -51,12 +51,15 @@ public interface SkillReviewAiService {
               4. Attached files: If main content references specific script filenames, do those
                  filenames appear in attachedFiles? Do NOT assess the internal contents of scripts.
               5. Description quality: Does description clearly explain what the Skill/Agent does and
-                 when to invoke it? (minimum ~15 meaningful characters)
+                 when to invoke it? Do NOT reject based on description length or character count —
+                 length alone is never a blocking reason. Only flag as an issue if the description
+                 is completely empty, is obvious placeholder text (e.g. "test", "aaa"), or provides
+                 zero meaningful information about what the skill does.
               6. Format: Is name kebab-case? Is version valid SemVer? Are tags relevant?
 
             Return a JSON object with exactly these fields:
               - approved: boolean (true = passes, proceed to human review)
-              - summary: string (1-2 sentence technical review summary in English)
+              - summary: string (ONE sentence, max 150 characters, technical review summary in English)
               - userExplanation: string (2-3 sentences in Traditional Chinese addressed directly to
                 the submitter starting with "您的". If rejected: explain why and what to fix in
                 plain friendly language. If approved: brief encouraging message.)
@@ -68,7 +71,8 @@ public interface SkillReviewAiService {
               - Do NOT use unescaped double-quote characters (") inside string values.
               - Write all issues and suggestions as plain prose sentences without any
                 markdown formatting (no code spans, no bold, no headers).
-              - Do NOT include newline characters inside any single string value.
+              - Do NOT include newline characters (\\n) inside any single string value — every
+                string value must be on a single line. This is the most important rule.
               - Keep each string value concise (under 200 characters).
             """)
     @UserMessage("""

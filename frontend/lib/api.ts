@@ -25,7 +25,7 @@ export interface SkillResponse {
   name: string;
   type: 'SKILL' | 'AGENT';
   description: string;
-  status: 'DRAFT' | 'PENDING_AI_REVIEW' | 'PENDING_HUMAN_REVIEW' | 'PUBLISHED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING_AI_REVIEW' | 'PENDING_HUMAN_REVIEW' | 'AI_REJECTED_REVIEW' | 'PUBLISHED' | 'REJECTED';
   version: string;
   tags: string[];
   hasMcpSpec: boolean;
@@ -93,4 +93,21 @@ export async function fetchSkillById(id: string): Promise<ApiResponse<SkillDetai
     cache: 'no-store',
   });
   return res.json() as Promise<ApiResponse<SkillDetailResponse>>;
+}
+
+export async function fetchSkillByNameAndType(
+  name: string,
+  type: 'SKILL' | 'AGENT'
+): Promise<SkillDetailResponse | null> {
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/v1/skills/lookup?name=${encodeURIComponent(name)}&type=${type}`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) return null;
+    const json: ApiResponse<SkillDetailResponse> = await res.json();
+    return json.success && json.data ? json.data : null;
+  } catch {
+    return null;
+  }
 }

@@ -3,6 +3,7 @@
 import { useRouter, useParams } from 'next/navigation';
 import { useUpload } from '@/lib/upload-context';
 import { useState } from 'react';
+import { fetchSkillByNameAndType } from '@/lib/api';
 
 const PRESET_TAGS = ['coding', 'ai', 'git', 'security', 'testing', 'docs', 'refactor', 'devops'];
 
@@ -17,6 +18,42 @@ export default function WizardStep1Basic() {
   const { state, updateForm, setErrors, clearError, setStep } = useUpload();
   const { formData, errors } = state;
   const [tagInput, setTagInput] = useState('');
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [existingFound, setExistingFound] = useState(false);
+
+  async function handleNameBlur() {
+    const name = (formData.name ?? '').trim();
+    if (!name || !/^[a-z0-9-]+$/.test(name) || !state.type) return;
+
+    const type = state.type.toUpperCase() as 'SKILL' | 'AGENT';
+    setLookupLoading(true);
+    setExistingFound(false);
+    try {
+      const found = await fetchSkillByNameAndType(name, type);
+      if (found) {
+        setExistingFound(true);
+        updateForm({
+          description: found.description,
+          version: found.version,
+          tags: found.tags,
+          authorName: found.authorName,
+          authorEmail: found.authorEmail,
+          changelog: found.changelog,
+          content: found.content,
+          installationSteps: found.installationSteps,
+          dependencies: found.dependencies,
+          osCompatibility: found.osCompatibility as ('WINDOWS' | 'MACOS')[],
+          environmentDeclaration: found.environmentDeclaration ?? undefined,
+          mcpSpec: found.mcpSpec ?? null,
+          cliOverrides: found.cliOverrides ?? {},
+          variables: found.variables ?? [],
+          attachedFiles: found.attachedFiles ?? [],
+        });
+      }
+    } finally {
+      setLookupLoading(false);
+    }
+  }
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
@@ -76,11 +113,21 @@ export default function WizardStep1Basic() {
           onChange={(e) => {
             updateForm({ name: e.target.value });
             clearError('name');
+            setExistingFound(false);
           }}
+          onBlur={handleNameBlur}
           placeholder="my-skill-name"
           className={inputClass(!!errors.name)}
         />
-        {formData.name && !errors.name && /^[a-z0-9-]+$/.test(formData.name) && (
+        {lookupLoading && (
+          <p className="text-xs text-gray-400 mt-1">查詢中...</p>
+        )}
+        {!lookupLoading && existingFound && (
+          <div className="mt-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+            已找到相同名稱的 {state.type?.toUpperCase()}，已自動帶入現有資料，請修改需要更新的欄位後重新送出。
+          </div>
+        )}
+        {!lookupLoading && !existingFound && formData.name && !errors.name && /^[a-z0-9-]+$/.test(formData.name) && (
           <p className="text-xs text-green-600 mt-1">✓ 格式正確</p>
         )}
       </Field>

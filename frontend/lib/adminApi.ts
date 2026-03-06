@@ -27,7 +27,7 @@ export interface AdminReviewItem {
   authorEmail: string;
   version: string;
   tags: string[];
-  status: 'PENDING_HUMAN_REVIEW' | 'AI_REJECTED_REVIEW';
+  status: 'PENDING_HUMAN_REVIEW' | 'AI_REJECTED_REVIEW' | 'PUBLISHED';
   aiReviewPassed: boolean;
   aiReviewSummary: string | null;
   aiReviewUserExplanation: string | null;
@@ -88,4 +88,12 @@ export async function approveReview(id: string): Promise<ApiResponse<null>> {
 
 export async function rejectReview(id: string): Promise<ApiResponse<null>> {
   return adminFetch<null>(`/api/v1/admin/reviews/${id}/reject`, { method: 'POST' });
+}
+
+export async function fetchPublishedSkills(): Promise<ApiResponse<AdminReviewItem[]>> {
+  return adminFetch<AdminReviewItem[]>('/api/v1/admin/published');
+}
+
+export async function deleteSkill(id: string): Promise<ApiResponse<null>> {
+  return adminFetch<null>(`/api/v1/admin/skills/${id}`, { method: 'DELETE' });
 }
