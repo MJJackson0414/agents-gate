@@ -22,8 +22,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | CLI 適配檔案預覽 | ✅ P0 完成 | 前端產生（客戶端）|
 | 變數 & 附加檔案（上傳精靈） | ✅ P1 完成 | Step2 自動偵測 `{VAR}` / `$VAR`，附加腳本 |
 | AI 初審（LangChain4j） | ✅ P1 完成 | 非同步審核，Claude Sonnet 4.6，JSON 解析防護 |
-| 人工審核後台 | ✅ P1 完成 | 管理員 UI，密碼驗證，PENDING_HUMAN_REVIEW / AI_REJECTED_REVIEW 清單 |
+| 人工審核後台 | ✅ P1 完成 | 管理員 UI，密碼驗證，PENDING_HUMAN_REVIEW / AI_REJECTED_REVIEW 清單，已通過刪除 |
 | Skill/Agent 詳細頁 | ✅ P1 完成 | `/skills/[id]`，完整欄位展示，npm 安裝指令 + 複製 |
+| 上傳同名自動帶入 | ✅ P1 完成 | Step1 名稱 onBlur 查詢 name+type，找到自動帶入所有欄位 |
+| 後端 Logging | ✅ P1 完成 | AdminController / AdminReviewService / AdminAuthService / SkillController SLF4J log |
 | CLI 下載套件封裝 | ⬜ P2 | 後端 packaging service |
 | MongoDB 語義搜尋 | ⬜ P2 | Embedding + RAG |
 | 使用者認證（JWT） | ⬜ P2 | NextAuth + Spring Security |
@@ -313,8 +315,8 @@ AgentsGate/
 │   │       ├── WizardStep3Environment.tsx # 步驟 3：環境宣告
 │   │       └── WizardStep4Preview.tsx     # 步驟 4：預覽 + 提交
 │   ├── lib/
-│   │   ├── api.ts                         # fetchSkills() / uploadSkill() / fetchSkillById()
-│   │   ├── adminApi.ts                    # 管理員 API（verifyPassword / approve / reject）
+│   │   ├── api.ts                         # fetchSkills() / uploadSkill() / fetchSkillById() / fetchSkillByNameAndType()
+│   │   ├── adminApi.ts                    # 管理員 API（verifyPassword / approve / reject / fetchPublishedSkills / deleteSkill）
 │   │   ├── cli-adapter.ts                 # 客戶端 CLI 適配檔案產生器
 │   │   └── upload-context.tsx             # useReducer 狀態 + localStorage 草稿
 │   ├── .env.local                         # 環境變數（本地）
@@ -326,8 +328,8 @@ AgentsGate/
 │   ├── src/main/java/com/agentsgate/
 │   │   ├── AgentsGateApplication.java     # Spring Boot 入口
 │   │   ├── api/
-│   │   │   ├── SkillController.java       # GET /api/v1/skills, GET /api/v1/skills/{id}, POST /api/v1/skills
-│   │   │   └── AdminController.java       # POST /verify, GET /pending, POST /{id}/approve, POST /{id}/reject
+│   │   │   ├── SkillController.java       # GET /api/v1/skills, GET /api/v1/skills/lookup, GET /api/v1/skills/{id}, POST /api/v1/skills
+│   │   │   └── AdminController.java       # POST /verify, GET /reviews, POST /{id}/approve, POST /{id}/reject, GET /published, DELETE /skills/{id}
 │   │   ├── domain/
 │   │   │   ├── Skill.java                 # JPA Entity（含巢狀 record）
 │   │   │   ├── SkillType.java             # Enum: SKILL, AGENT
@@ -341,9 +343,9 @@ AgentsGate/
 │   │   ├── repository/
 │   │   │   └── SkillRepository.java       # JpaRepository<Skill, UUID>
 │   │   ├── service/
-│   │   │   ├── SkillService.java          # uploadSkill() / listAll() / findById()
+│   │   │   ├── SkillService.java          # uploadSkill() / listAll() / findById() / lookupByNameAndType()
 │   │   │   ├── AdminAuthService.java      # 密碼驗證 + Token 管理（8h TTL）
-│   │   │   └── AdminReviewService.java    # approve() / reject() 狀態流轉
+│   │   │   └── AdminReviewService.java    # approve() / reject() / listPublished() / deleteById()
 │   │   ├── ai/
 │   │   │   ├── AiReviewService.java       # @Async 審核協調器（觸發、狀態流轉、錯誤處理）
 │   │   │   ├── SkillReviewAiService.java  # LangChain4j interface（@SystemMessage / @UserMessage）
@@ -410,6 +412,14 @@ npm run lint       # ESLint 檢查
 ---
 
 ## API 端點（目前實作）
+
+### GET /api/v1/skills/lookup?name={name}&type={SKILL|AGENT}
+
+依名稱 + 類型查詢最新一筆 Skill/Agent（不論狀態）。用於上傳精靈 Step1 自動帶入現有資料。
+
+- 200 + SkillDetailResponse（找到）
+- 404（未找到）
+- `name` 與 `type` 必須同時符合（SKILL 與 AGENT 不同命名空間）
 
 ### GET /api/v1/skills
 

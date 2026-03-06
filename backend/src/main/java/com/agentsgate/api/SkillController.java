@@ -1,11 +1,14 @@
 package com.agentsgate.api;
 
+import com.agentsgate.domain.SkillType;
 import com.agentsgate.dto.ApiResponse;
 import com.agentsgate.dto.SkillDetailResponse;
 import com.agentsgate.dto.SkillResponse;
 import com.agentsgate.dto.SkillUploadRequest;
 import com.agentsgate.service.SkillService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -21,6 +24,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/skills")
 public class SkillController {
 
+    private static final Logger log = LoggerFactory.getLogger(SkillController.class);
+
     private final SkillService skillService;
 
     public SkillController(SkillService skillService) {
@@ -30,6 +35,17 @@ public class SkillController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<SkillResponse>>> listSkills() {
         return ResponseEntity.ok(ApiResponse.ok(skillService.listAll()));
+    }
+
+    @GetMapping("/lookup")
+    public ResponseEntity<ApiResponse<SkillDetailResponse>> lookup(
+            @RequestParam String name,
+            @RequestParam SkillType type) {
+        log.info("[Skill] Lookup name='{}' type={}", name, type);
+        return skillService.lookupByNameAndType(name, type)
+                .map(dto -> ResponseEntity.ok(ApiResponse.ok(dto)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("找不到相同名稱的 " + type)));
     }
 
     @GetMapping("/{id}")
