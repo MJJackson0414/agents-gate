@@ -28,6 +28,8 @@ app:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
   admin:
     password: ${ADMIN_PASSWORD:admin1234}
+  ai-review:
+    enabled: ${AI_REVIEW_ENABLED:false}   # 設為 false 可在開發時跳過 AI 審核，自動核准進入人工審核佇列
 
 anthropic:
   api-key: ${ANTHROPIC_API_KEY:}
