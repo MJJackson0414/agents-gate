@@ -35,7 +35,25 @@ public class CliPackageService {
 
             // 2. SKILL.md 或 AGENT.md
             String filename = "SKILL".equalsIgnoreCase(skill.getType().name()) ? "SKILL.md" : "AGENT.md";
-            String content = skill.getContent() != null ? skill.getContent() : "";
+
+            // 加入標準的 Markdown Frontmatter 格式
+            StringBuilder contentBuilder = new StringBuilder();
+            contentBuilder.append("---\n");
+            contentBuilder.append("name: ").append(skill.getName()).append("\n");
+            if (skill.getDescription() != null && !skill.getDescription().isEmpty()) {
+                // 將換行替換為空格以避免破壞 frontmatter 格式，或根據需求直接放入
+                contentBuilder.append("description: ").append(skill.getDescription().replace("\n", " ")).append("\n");
+            } else {
+                contentBuilder.append("description: No description provided\n");
+            }
+            contentBuilder.append("user-invocable: true\n");
+            contentBuilder.append("---\n\n");
+
+            if (skill.getContent() != null) {
+                contentBuilder.append(skill.getContent());
+            }
+
+            String content = contentBuilder.toString();
             addFileToZip(zos, filename, content.getBytes(StandardCharsets.UTF_8));
 
             // 3. config.json

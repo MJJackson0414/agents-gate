@@ -53,7 +53,7 @@ docker ps
 **Windows PowerShell：**
 
 ```powershell
-cd D:\workspace\AgentsGate\backend
+cd backend
 
 $env:ANTHROPIC_API_KEY = "sk-ant-api03-your-key-here"
 
@@ -63,7 +63,7 @@ $env:ANTHROPIC_API_KEY = "sk-ant-api03-your-key-here"
 **Windows CMD：**
 
 ```cmd
-cd D:\workspace\AgentsGate\backend
+cd backend
 
 set ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 
@@ -77,7 +77,7 @@ mvnw.cmd spring-boot:run
 ### 步驟 3：啟動前端
 
 ```bash
-cd D:\workspace\AgentsGate\frontend
+cd frontend
 
 npm install        # 首次執行，之後可省略
 
