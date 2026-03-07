@@ -15,12 +15,22 @@ if (!fs.existsSync(sourceFile)) {
     }
 }
 
-const options = [
-    { label: 'Claude (.claude/skills)', value: '.claude/skills', selected: true },
-    { label: 'Gemini (.gemini/skills)', value: '.gemini/skills', selected: false },
-    { label: 'Gemini Agents (.gemini/agents/skills)', value: '.gemini/agents/skills', selected: false },
-    { label: '自訂路徑...', value: 'custom', selected: false }
+const targetCliFormat = 'ALL'; // THIS_WILL_BE_REPLACED_BY_BACKEND
+
+const allOptions = [
+    { label: 'Claude (.claude/skills)', value: '.claude/skills', cli: 'CLAUDE', selected: false },
+    { label: 'Gemini (.gemini/skills)', value: '.gemini/skills', cli: 'GEMINI', selected: false },
+    { label: 'Gemini Agents (.gemini/agents/skills)', value: '.gemini/agents/skills', cli: 'GEMINI', selected: false },
+    { label: '自訂路徑...', value: 'custom', cli: 'ALL', selected: false }
 ];
+
+let options = allOptions;
+if (targetCliFormat && targetCliFormat !== 'ALL' && targetCliFormat !== 'null') {
+    options = allOptions.filter(opt => opt.cli === targetCliFormat || opt.cli === 'ALL');
+}
+if (options.length > 0) {
+    options[0].selected = true; // 預設選擇第一個
+}
 
 let cursor = 0;
 let menuLines = 0;
@@ -168,6 +178,39 @@ async function processSelection() {
 }
 
 /**
+ * 遞迴複製資料夾
+ */
+function copyDirectoryRecursiveSync(source, target, topTarget) {
+    if (!fs.existsSync(target)) {
+        fs.mkdirSync(target, { recursive: true });
+    }
+    const files = fs.readdirSync(source);
+    for (const file of files) {
+        // 略過安裝腳本、設定檔與 SKILL.md/AGENT.md
+        if (['bin', 'package.json', 'config.json', '.DS_Store', 'SKILL.md', 'AGENT.md', '.claude', '.gemini', 'node_modules'].includes(file)) {
+            continue;
+        }
+        const curSource = path.join(source, file);
+        const curTarget = path.join(target, file);
+
+        // 防呆：避免無窮迴圈。若目標資料夾剛好選在本安裝包中，會導致自己複製自己。
+        if (topTarget) {
+            const resolvedSource = path.resolve(curSource);
+            const resolvedTop = path.resolve(topTarget);
+            if (resolvedTop === resolvedSource || resolvedTop.startsWith(resolvedSource + path.sep)) {
+                continue;
+            }
+        }
+
+        if (fs.lstatSync(curSource).isDirectory()) {
+            copyDirectoryRecursiveSync(curSource, curTarget, topTarget);
+        } else {
+            fs.copyFileSync(curSource, curTarget);
+        }
+    }
+}
+
+/**
  * baseSkillsPath: 安裝路徑
  * paramsObj: 使用者輸入的 { KEY: "值" } 物件
  */
@@ -178,6 +221,10 @@ function installToPath(baseSkillsPath, paramsObj) {
 
         // 建立目標資料夾
         fs.mkdirSync(targetDir, { recursive: true });
+
+        // === 拷貝附加檔案與目錄 (scripts 等) ===
+        const sourceDir = path.join(__dirname, '..');
+        copyDirectoryRecursiveSync(sourceDir, targetDir, targetDir);
 
         // 讀取原本的 SKILL.md
         let content = fs.readFileSync(sourceFile, 'utf-8');

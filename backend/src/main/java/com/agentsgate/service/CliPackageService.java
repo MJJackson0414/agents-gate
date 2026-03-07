@@ -84,6 +84,11 @@ public class CliPackageService {
             // 5. bin/index.js
             String indexJs = readResourceFile("cli-template/bin/index.js");
             indexJs = indexJs.replace("const skillName = 'skill-lookup';", "const skillName = '" + packageName + "';");
+
+            String sourceCli = skill.getSourceCliFormat() != null ? skill.getSourceCliFormat().toUpperCase() : "ALL";
+            indexJs = indexJs.replace("const targetCliFormat = 'ALL'; // THIS_WILL_BE_REPLACED_BY_BACKEND",
+                    "const targetCliFormat = '" + sourceCli + "'; // THIS_WILL_BE_REPLACED_BY_BACKEND");
+
             addFileToZip(zos, "bin/index.js", indexJs.getBytes(StandardCharsets.UTF_8));
 
             zos.finish();
@@ -105,7 +110,7 @@ public class CliPackageService {
         if (baseName.isEmpty()) {
             baseName = "agent-skill";
         }
-        return baseName + "-" + skill.getId().toString().substring(0, 8);
+        return baseName;
     }
 
     private String generatePackageJson(Skill skill, String packageName) {
