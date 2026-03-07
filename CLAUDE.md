@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | AI 審核開關（Dev Mode） | ✅ P1 完成 | `app.ai-review.enabled=false` 跳過 AI 呼叫，自動核准並 WARN log 警示 |
 | ZIP/RAR 壓縮包上傳精靈 | ✅ P1.5 完成 | `/upload/archive` 5 步驟，瀏覽器解析 ZIP/RAR，檔案樹預覽 |
 | sourceCliFormat（CLI 專屬標記） | ✅ P1.5 完成 | 後端欄位 + CliCompatibility 顯示 + SkillCard badge |
-| CLI 下載套件封裝 | ⬜ P2 | 後端 packaging service |
+| CLI 下載套件封裝（自動打包 ZIP） | ✅ P1.5 完成 | 後端 packaging service（合併 frontmatter、目錄遞迴複製防無窮迴圈、CLI 選單自動過濾、{VAR}動態置換） |
 | MongoDB 語義搜尋 | ⬜ P2 | Embedding + RAG |
 | 使用者認證（JWT） | ⬜ P2 | NextAuth + Spring Security |
 | 版本歷史 | ⬜ P2 | SemVer 管理 |
