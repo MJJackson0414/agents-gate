@@ -128,9 +128,21 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ id
         {/* Install Command */}
         <Section title="安裝指令">
           <InstallCommand skillName={skill.name} />
-          <p className="mt-2 text-xs text-gray-400">
-            需先安裝 Node.js。npm 套件將於近期發布，敬請期待。
-          </p>
+          
+          <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-2">
+            <h3 className="text-sm font-medium text-gray-800">開發者選項</h3>
+            <p className="text-xs text-gray-500">
+              您可以下載已經打包好的 npm CLI 專案範本。下載後解壓縮，即可在本地測試或使用 <code className="bg-gray-100 px-1 rounded">npm publish</code> 直接發布到 npm 平台提供他人下載安裝您的 Skill。
+            </p>
+            <a 
+              href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'}/api/v1/skills/${skill.id}/cli-package`}
+              download
+              className="inline-flex w-fit items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-medium rounded-lg text-sm transition-colors"
+            >
+              <Package size={16} />
+              下載 CLI 封裝套件 (ZIP)
+            </a>
+          </div>
         </Section>
 
         {/* CLI Compatibility */}

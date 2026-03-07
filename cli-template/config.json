@@ -1,0 +1,22 @@
+[
+    {
+        "key": "TOKEN",
+        "prompt": "請輸入您的 API Token (若無請直接按 Enter 跳過): ",
+        "example": ""
+    },
+    {
+        "key": "USERNAME",
+        "prompt": "請輸入您的使用者名稱 (例如 Owen): ",
+        "example": "Owen"
+    },
+    {
+        "key": "LANGUAGE",
+        "prompt": "請輸入您的慣用語言 (例如 zh-TW): ",
+        "example": "zh-TW"
+    },
+    {
+        "key": "MODEL",
+        "prompt": "請輸入您的偏好模型 (例如 gemini-2.5-flash): ",
+        "example": "gemini-2.5-flash"
+    }
+]

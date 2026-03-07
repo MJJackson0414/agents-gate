@@ -22,10 +22,13 @@ public class SkillService {
 
     private final SkillRepository skillRepository;
     private final AiReviewService aiReviewService;
+    private final CliPackageService cliPackageService;
 
-    public SkillService(SkillRepository skillRepository, AiReviewService aiReviewService) {
+    public SkillService(SkillRepository skillRepository, AiReviewService aiReviewService,
+            CliPackageService cliPackageService) {
         this.skillRepository = skillRepository;
         this.aiReviewService = aiReviewService;
+        this.cliPackageService = cliPackageService;
     }
 
     @Transactional
@@ -62,6 +65,11 @@ public class SkillService {
                 .map(SkillDetailResponse::from);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<byte[]> getCliPackage(UUID id) {
+        return skillRepository.findById(id).map(cliPackageService::createCliPackage);
+    }
+
     private Skill mapRequestToEntity(SkillUploadRequest request) {
         Skill skill = new Skill();
         skill.setName(request.name());
@@ -86,8 +94,7 @@ public class SkillService {
                     env.requiresMcpServer(),
                     env.requiresLocalService(),
                     env.requiresSystemPackages(),
-                    env.additionalNotes()
-            ));
+                    env.additionalNotes()));
         }
 
         if (request.mcpSpec() != null) {
@@ -96,8 +103,7 @@ public class SkillService {
                     mcp.serverName(),
                     mcp.command(),
                     mcp.args(),
-                    mcp.env()
-            ));
+                    mcp.env()));
         }
 
         if (request.variables() != null) {
