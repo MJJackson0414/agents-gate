@@ -25,15 +25,17 @@ public class AdminReviewService {
 
     private static final Set<SkillStatus> REVIEWABLE_STATUSES = Set.of(
             SkillStatus.PENDING_HUMAN_REVIEW,
-            SkillStatus.AI_REJECTED_REVIEW
-    );
+            SkillStatus.AI_REJECTED_REVIEW);
 
     private final SkillRepository skillRepository;
     private final ObjectMapper objectMapper;
+    private final NpmPublishService npmPublishService;
 
-    public AdminReviewService(SkillRepository skillRepository, ObjectMapper objectMapper) {
+    public AdminReviewService(SkillRepository skillRepository, ObjectMapper objectMapper,
+            NpmPublishService npmPublishService) {
         this.skillRepository = skillRepository;
         this.objectMapper = objectMapper;
+        this.npmPublishService = npmPublishService;
     }
 
     @Transactional(readOnly = true)
@@ -51,6 +53,13 @@ public class AdminReviewService {
     public ReviewActionResult approve(UUID id) {
         ReviewActionResult result = updateStatus(id, SkillStatus.PUBLISHED);
         log.info("[Admin] 審核通過 id={} → {}", id, result);
+
+        if (result == ReviewActionResult.SUCCESS) {
+            skillRepository.findById(id).ifPresent(skill -> {
+                npmPublishService.publishToInternalRegistry(skill);
+            });
+        }
+
         return result;
     }
 
