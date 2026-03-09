@@ -63,7 +63,9 @@ export default function AdminReviewsPage() {
 
         let packageName = item.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
         if (!packageName) packageName = 'agent-skill';
-        const nexusUrl = `http://192.168.64.7:8081/#browse/browse:npm-hosted:${packageName}`;
+
+        const baseUrl = process.env.NEXT_PUBLIC_NEXUS_URL || 'http://192.168.64.7:8081/#browse/browse:npm-hosted:';
+        const nexusUrl = `${baseUrl}${packageName}`;
 
         setTimeout(() => {
           if (confirm(`✅ 發布審核通過！\n\n系統正在將套件推送到 Nexus。\n是否要開啟新分頁前往 Nexus 查看 ${packageName}？`)) {

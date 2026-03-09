@@ -3,6 +3,7 @@ package com.agentsgate.service;
 import com.agentsgate.domain.Skill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,12 @@ public class NpmPublishService {
 
     private static final Logger log = LoggerFactory.getLogger(NpmPublishService.class);
     private final CliPackageService cliPackageService;
+
+    @Value("${npm.registry.url}")
+    private String registryUrl;
+
+    @Value("${npm.registry.auth}")
+    private String registryAuth;
 
     public NpmPublishService(CliPackageService cliPackageService) {
         this.cliPackageService = cliPackageService;
@@ -57,14 +64,13 @@ public class NpmPublishService {
             }
 
             // 4. Create .npmrc
-            String npmrcContent = "registry=http://192.168.64.7:8081/repository/npm-hosted/\n" +
-                    "//192.168.64.7:8081/repository/npm-hosted/:_auth=YWRtaW46YWRtaW4xMjM0\n";
+            String npmrcContent = "registry=" + registryUrl + "\n" +
+                    "//" + registryUrl.replaceFirst("^https?://", "") + ":_auth=" + registryAuth + "\n";
             Files.writeString(tempDir.resolve(".npmrc"), npmrcContent);
 
             // 5. Run npm publish
-            log.info("[NpmPublish] 開始執行 npm publish...");
-            ProcessBuilder pb = new ProcessBuilder("npm", "publish",
-                    "--registry=http://192.168.64.7:8081/repository/npm-hosted/");
+            log.info("[NpmPublish] 開始執行 npm publish 到 {} ...", registryUrl);
+            ProcessBuilder pb = new ProcessBuilder("npm", "publish", "--registry=" + registryUrl);
             pb.directory(tempDir.toFile());
             pb.redirectErrorStream(true);
             Process process = pb.start();
