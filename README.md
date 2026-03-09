@@ -181,19 +181,29 @@ docker logs agentsgate-postgres
 
 ---
 
-## CLI 套件封裝與安裝機制（已實作）
+## CLI 套件封裝與發布機制（已實作）
 
-當使用者在平台上點擊下載 Skill / Agent 時，後端（`CliPackageService`）會將資料庫內容結合 `cli-template/` 的核心範本，即時打包成一個完整的 Node.js 安裝套件包 `.zip`。
+當開發者上傳 Skill / Agent 並通過管理員審核後，後端會啟動自動化發布流程：
 
-使用者解壓縮後執行 `node bin/index.js`，即可享受以下自動化安裝體驗：
+1. **套件封裝**：後端（`CliPackageService`）會將資料庫內容結合 `cli-template/`，動態綁定版號並打包成完整的 Node.js 安裝套件包。
+2. **自動發布**：後端（`NpmPublishService`）會自動產生 `.npmrc` 並將套件推送到內部的 Nexus NPM Registry（`http://192.168.64.7:8081/repository/npm-hosted/`）。
+3. **管理員捷徑**：管理員在後台審核通過時，畫面會彈出提示並支援一鍵開啟新分頁前往 Nexus 查看該套件。
+
+使用者不再需要手動下載壓縮包，只需在終端機執行標準 `npx` 指令即可安裝（建議加上 `@latest` 確保取得最新版）：
+
+```bash
+npx your-skill-name@latest --registry=http://192.168.64.7:8081/
+```
+
+執行後會出現互動程式，帶來以下自動化安裝體驗：
 
 - **自動依據相容性過濾 CLI 選單**：若該 Skill 標記為 Claude 專屬（`sourceCliFormat=CLAUDE`），安裝時的互動菜單只會顯示 `.claude/skills`，自動隱藏無關選項。
 - **標準 Markdown Frontmatter 注入**：產出的 `SKILL.md` (或 `AGENT.md`) 皆會被嚴格確保包含標準的 YAML Frontmatter（包含 `name`, `description`, `user-invocable`）。
-- **附加目錄完整遞迴拷貝**：除了主要文件，開發者上傳的 `scripts/`（腳本）及設定檔等各式附屬工具，都會隨同安裝被遞迴複製進最終的目標使用者目錄！並內建防無限迴圈防呆檢查。
+- **附加目錄完整遞迴拷貝**：除了主要文件，上傳的 `scripts/`（腳本）等附屬工具，都會隨同安裝被遞迴複製進終端使用者目錄，並內建防無限迴圈機制。
 - **動態參數智慧取代**：支援使用者輸入自訂參數並自動替換 `{VAR}` 或 `{{VAR}}` 的佔位符，且能同步更新下載目錄中的原始範本。
-- **簡潔直觀的套件命名**：依據名稱自動轉換為全小寫連字號的乾淨資料夾名稱（如：`openai-image-gen`）！
+- **簡潔直觀的套件命名**：自動將名稱轉換為 `package.json` 的 `bin` 指令名稱（全小寫連字號），與 npm 社群標準完美接軌！
 
-如果開發者想要獨立測試或發布至 npm 等操作，可參閱內部範本說明的 [`cli-template/README.md`](./cli-template/README.md)。
+如果開發者想要獨立測試，可參閱內部範本說明的 [`cli-template/README.md`](./cli-template/README.md)。
 
 ---
 
