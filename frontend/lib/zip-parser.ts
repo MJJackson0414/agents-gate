@@ -51,7 +51,7 @@ function stripTopLevelDir(paths: string[]): boolean {
 
 export function parseFrontmatter(content: string): Record<string, string> {
   const meta: Record<string, string> = {};
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  const match = content.match(/^\s*---\r?\n([\s\S]*?)\r?\n---/);
   if (!match) return meta;
   for (const line of match[1].split('\n')) {
     const colonIdx = line.indexOf(':');
@@ -64,7 +64,7 @@ export function parseFrontmatter(content: string): Record<string, string> {
 }
 
 export function extractBody(content: string): string {
-  const match = content.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?([\s\S]*)$/);
+  const match = content.match(/^\s*---\r?\n[\s\S]*?\r?\n---\r?\n?([\s\S]*)$/);
   return match ? match[1].trim() : content.trim();
 }
 
@@ -90,7 +90,7 @@ export async function parseZip(file: File, cli: CliFormat): Promise<ParsedArchiv
   });
 
   // Detect and strip common top-level directory (e.g. skill-creator/ wrapping everything)
-  const hasCommonRoot = allPaths.length > 1 && stripTopLevelDir(allPaths);
+  const hasCommonRoot = allPaths.length > 0 && stripTopLevelDir(allPaths);
   const normalize = (p: string): string =>
     hasCommonRoot ? p.slice(p.indexOf('/') + 1) : p;
 
@@ -169,7 +169,7 @@ async function parseRar(file: File, cli: CliFormat): Promise<ParsedArchive> {
   const allPaths = fileHeaders
     .map((h) => h.name.replace(/\\/g, '/'))
     .filter((p) => !p.includes('__MACOSX/') && !p.includes('.DS_Store'));
-  const hasCommonRoot = allPaths.length > 1 && stripTopLevelDir(allPaths);
+  const hasCommonRoot = allPaths.length > 0 && stripTopLevelDir(allPaths);
   const normalize = (p: string): string => {
     const norm = p.replace(/\\/g, '/');
     return hasCommonRoot ? norm.slice(norm.indexOf('/') + 1) : norm;
