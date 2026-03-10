@@ -32,10 +32,10 @@ const TEXT_EXTENSIONS = new Set([
 
 // Entry file patterns per CLI type
 const ENTRY_PATTERNS: Record<CliFormat, (path: string) => boolean> = {
-  CLAUDE:  (p) => p.toLowerCase() === 'skill.md',
+  CLAUDE: (p) => p.toLowerCase() === 'skill.md',
   COPILOT: (p) => p.endsWith('.agent.md') && !p.includes('/'),
-  GEMINI:  (p) => p.toLowerCase() === 'skill.md',
-  KIRO:    (p) => p.endsWith('.md') && !p.includes('/'),
+  GEMINI: (p) => p.toLowerCase() === 'skill.md',
+  KIRO: (p) => p.endsWith('.md') && !p.includes('/'),
 };
 
 function isTextFile(filename: string): boolean {
@@ -85,7 +85,9 @@ export async function parseZip(file: File, cli: CliFormat): Promise<ParsedArchiv
   }
 
   const zip = await JSZip.loadAsync(file);
-  const allPaths = Object.keys(zip.files).filter((p) => !zip.files[p].dir);
+  const allPaths = Object.keys(zip.files).filter((p) => {
+    return !zip.files[p].dir && !p.includes('__MACOSX/') && !p.includes('.DS_Store');
+  });
 
   // Detect and strip common top-level directory (e.g. skill-creator/ wrapping everything)
   const hasCommonRoot = allPaths.length > 1 && stripTopLevelDir(allPaths);
@@ -164,7 +166,9 @@ async function parseRar(file: File, cli: CliFormat): Promise<ParsedArchive> {
   const allHeaders = [...list.fileHeaders];
   const fileHeaders = allHeaders.filter((h) => !h.flags.directory);
 
-  const allPaths = fileHeaders.map((h) => h.name.replace(/\\/g, '/'));
+  const allPaths = fileHeaders
+    .map((h) => h.name.replace(/\\/g, '/'))
+    .filter((p) => !p.includes('__MACOSX/') && !p.includes('.DS_Store'));
   const hasCommonRoot = allPaths.length > 1 && stripTopLevelDir(allPaths);
   const normalize = (p: string): string => {
     const norm = p.replace(/\\/g, '/');
