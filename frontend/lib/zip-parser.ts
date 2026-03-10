@@ -32,10 +32,10 @@ const TEXT_EXTENSIONS = new Set([
 
 // Entry file patterns per CLI type
 const ENTRY_PATTERNS: Record<CliFormat, (path: string) => boolean> = {
-  CLAUDE:  (p) => p.toLowerCase() === 'skill.md',
+  CLAUDE: (p) => p.toLowerCase() === 'skill.md',
   COPILOT: (p) => p.endsWith('.agent.md') && !p.includes('/'),
-  GEMINI:  (p) => p.toLowerCase() === 'skill.md',
-  KIRO:    (p) => p.endsWith('.md') && !p.includes('/'),
+  GEMINI: (p) => p.toLowerCase() === 'skill.md',
+  KIRO: (p) => p.endsWith('.md') && !p.includes('/'),
 };
 
 function isTextFile(filename: string): boolean {
@@ -51,7 +51,7 @@ function stripTopLevelDir(paths: string[]): boolean {
 
 export function parseFrontmatter(content: string): Record<string, string> {
   const meta: Record<string, string> = {};
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  const match = content.match(/^\s*---\r?\n([\s\S]*?)\r?\n---/);
   if (!match) return meta;
   for (const line of match[1].split('\n')) {
     const colonIdx = line.indexOf(':');
@@ -64,7 +64,7 @@ export function parseFrontmatter(content: string): Record<string, string> {
 }
 
 export function extractBody(content: string): string {
-  const match = content.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?([\s\S]*)$/);
+  const match = content.match(/^\s*---\r?\n[\s\S]*?\r?\n---\r?\n?([\s\S]*)$/);
   return match ? match[1].trim() : content.trim();
 }
 
@@ -85,10 +85,12 @@ export async function parseZip(file: File, cli: CliFormat): Promise<ParsedArchiv
   }
 
   const zip = await JSZip.loadAsync(file);
-  const allPaths = Object.keys(zip.files).filter((p) => !zip.files[p].dir);
+  const allPaths = Object.keys(zip.files).filter((p) => {
+    return !zip.files[p].dir && !p.includes('__MACOSX/') && !p.includes('.DS_Store');
+  });
 
   // Detect and strip common top-level directory (e.g. skill-creator/ wrapping everything)
-  const hasCommonRoot = allPaths.length > 1 && stripTopLevelDir(allPaths);
+  const hasCommonRoot = allPaths.length > 0 && stripTopLevelDir(allPaths);
   const normalize = (p: string): string =>
     hasCommonRoot ? p.slice(p.indexOf('/') + 1) : p;
 
@@ -164,8 +166,10 @@ async function parseRar(file: File, cli: CliFormat): Promise<ParsedArchive> {
   const allHeaders = [...list.fileHeaders];
   const fileHeaders = allHeaders.filter((h) => !h.flags.directory);
 
-  const allPaths = fileHeaders.map((h) => h.name.replace(/\\/g, '/'));
-  const hasCommonRoot = allPaths.length > 1 && stripTopLevelDir(allPaths);
+  const allPaths = fileHeaders
+    .map((h) => h.name.replace(/\\/g, '/'))
+    .filter((p) => !p.includes('__MACOSX/') && !p.includes('.DS_Store'));
+  const hasCommonRoot = allPaths.length > 0 && stripTopLevelDir(allPaths);
   const normalize = (p: string): string => {
     const norm = p.replace(/\\/g, '/');
     return hasCommonRoot ? norm.slice(norm.indexOf('/') + 1) : norm;

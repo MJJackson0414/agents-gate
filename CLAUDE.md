@@ -161,7 +161,8 @@ inclusion: always
 │  ✅ AI 初審 Service（LangChain4j + Claude Sonnet 4.6）         │
 │  ✅ 人工審核 API（approve/reject/delete）                      │
 │  ✅ sourceCliFormat 欄位（CLI 專屬標記）                       │
-│  ⬜ 下載套件封裝 Service（P2）                                 │
+│  ✅ CLI 下載套件封裝打包提取 (CliPackageService)              │
+│  ✅ 內部 NPM Registry 自動發布 (NpmPublishService)             │
 │  ⬜ 搜尋 Service（P2）                                         │
 └───────────┬─────────────────────────────┬────────────────────┘
             │                             │

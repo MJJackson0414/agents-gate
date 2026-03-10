@@ -51,12 +51,27 @@ export default function AdminReviewsPage() {
   }, [loadReviews, router]);
 
   const handleApprove = async (id: string) => {
-    if (!confirm('確定要通過發布此項目？')) return;
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    if (!confirm(`確定要通過發布「${item.name}」？`)) return;
     setActionLoading(id);
     try {
       const res = await approveReview(id);
       if (res.success) {
-        setItems(prev => prev.filter(item => item.id !== id));
+        setItems(prev => prev.filter(i => i.id !== id));
+
+        let packageName = item.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        if (!packageName) packageName = 'agent-skill';
+
+        const baseUrl = process.env.NEXT_PUBLIC_NEXUS_URL || 'http://192.168.64.7:8081/#browse/browse:npm-hosted:';
+        const nexusUrl = `${baseUrl}${packageName}`;
+
+        setTimeout(() => {
+          if (confirm(`✅ 發布審核通過！\n\n系統正在將套件推送到 Nexus。\n是否要開啟新分頁前往 Nexus 查看 ${packageName}？`)) {
+            window.open(nexusUrl, '_blank');
+          }
+        }, 100); // 稍微延遲讓狀態先更新
       } else {
         alert(res.error ?? '操作失敗');
       }

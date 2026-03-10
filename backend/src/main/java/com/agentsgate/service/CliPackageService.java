@@ -117,11 +117,11 @@ public class CliPackageService {
         try {
             Map<String, Object> pkg = new HashMap<>();
             pkg.put("name", packageName);
-            pkg.put("version", "1.0.0");
+            pkg.put("version", skill.getVersion() != null ? skill.getVersion() : "1.0.0");
             pkg.put("description", "Installer for " + skill.getName() + " AI skill/agent");
 
             Map<String, String> bin = new HashMap<>();
-            bin.put("install-" + packageName, "./bin/index.js");
+            bin.put(packageName, "./bin/index.js");
             pkg.put("bin", bin);
 
             List<String> keywords = new ArrayList<>();
